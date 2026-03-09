@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DRR Builder's Journey</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3d8ef8;
+            --primary-dark: #2563eb;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+            --dark: #1e293b;
+            --surface: rgba(255,255,255,0.97);
+            --radius: 16px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.15);
+            --font-display: 'Fredoka One', cursive;
+            --font-body: 'Nunito', sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; overflow: hidden; background: #dde4f0;
+            font-family: var(--font-body); touch-action: none;
+        }
+        #game-container { width: 100vw; height: 100vh; display: block; filter: blur(6px); transition: filter 0.5s; }
+
+        /* ── Language Toggle ─────────────────────────── */
+        #top-bar { position: absolute; top: 16px; right: 16px; z-index: 60; display: flex; gap: 8px; }
+        .lang-btn {
+            background: rgba(255,255,255,0.85); border: 2px solid #d1d5db; padding: 4px 12px;
+            border-radius: 20px; cursor: pointer; font-weight: 800; color: #64748b;
+            font-family: var(--font-body); font-size: 13px; transition: all 0.2s; backdrop-filter: blur(8px);
+        }
+        .lang-btn.active { border-color: var(--primary); color: var(--primary); background: rgba(61,142,248,0.1); }
+
+        /* ── Overlay Screens ─────────────────────────── */
+        .overlay-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(220, 228, 242, 0.88); backdrop-filter: blur(14px); z-index: 50;
+            transition: opacity 0.4s ease; padding: 20px;
+        }
+        .hidden { opacity: 0 !important; pointer-events: none !important; }
+
+        .title-box { text-align: center; margin-bottom: 28px; }
+        .title-box h1 { font-family: var(--font-display); font-size: 46px; color: var(--dark); margin: 0 0 8px 0; letter-spacing: 0.5px; text-shadow: 0 3px 0 rgba(0,0,0,0.08); }
+        .title-box p { font-size: 15px; color: #64748b; max-width: 420px; margin: 0 auto; font-weight: 600; }
+        .title-badge { display: inline-block; background: var(--primary); color: white; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; letter-spacing: 1px; }
+
+        .menu-btn {
+            background: var(--primary); color: white; border: none; padding: 14px 36px;
+            margin: 7px; border-radius: 50px; font-size: 17px; font-weight: 800; cursor: pointer;
+            width: 340px; transition: all 0.2s; box-shadow: 0 5px 0 var(--primary-dark), 0 8px 20px rgba(61,142,248,0.3);
+            font-family: var(--font-body);
+        }
+        .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--primary-dark), 0 12px 25px rgba(61,142,248,0.35); }
+        .menu-btn:active { transform: translateY(2px); box-shadow: 0 3px 0 var(--primary-dark); }
+        .menu-btn.sandbox { background: var(--purple); box-shadow: 0 5px 0 #6d28d9, 0 8px 20px rgba(139,92,246,0.3); }
+        .menu-btn.sandbox:hover { box-shadow: 0 7px 0 #6d28d9, 0 12px 25px rgba(139,92,246,0.35); }
+        .menu-btn.back { background: #94a3b8; box-shadow: 0 4px 0 #64748b; width: auto; padding: 10px 28px; font-size: 14px; margin-top: 16px; }
+        .menu-btn.back:hover { box-shadow: 0 6px 0 #64748b; }
+        .menu-btn.level-card {
+            background: white; color: var(--dark); border: none; text-align: left; padding: 14px 20px;
+            box-shadow: 0 4px 0 #cbd5e1, 0 4px 12px rgba(0,0,0,0.08); border-radius: var(--radius);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .menu-btn.level-card:hover { background: #f0f7ff; box-shadow: 0 6px 0 #93c5fd, 0 8px 20px rgba(61,142,248,0.15); }
+        .level-card-title { font-size: 15px; font-weight: 800; }
+        .level-card-desc { font-size: 12px; color: #64748b; font-weight: 600; }
+        .level-card-badges { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+        .badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px; }
+        .badge-easy    { background: #d1fae5; color: #065f46; }
+        .badge-medium  { background: #fef3c7; color: #92400e; }
+        .badge-hard    { background: #fee2e2; color: #991b1b; }
+        .badge-flood   { background: #dbeafe; color: #1e40af; }
+        .badge-volcano { background: #ffedd5; color: #9a3412; }
+        .badge-quake   { background: #f3e8ff; color: #5b21b6; }
+        .badge-tsunami { background: #ecfeff; color: #155e75; }
+        .badge-coastal { background: #f0fdf4; color: #14532d; }
+        .badge-landslide { background: #fdf4ff; color: #701a75; }
+        .badge-multihazard { background: #fef9c3; color: #713f12; }
+        .badge-timer   { background: #fee2e2; color: #991b1b; }
+        .badge-unlim   { background: #f1f5f9; color: #475569; }
+
+        #level-list { display: flex; flex-direction: column; gap: 8px; max-height: 58vh; overflow-y: auto; padding: 4px 4px 4px 4px; width: 100%; max-width: 400px; scrollbar-width: thin; }
+
+        /* ── In-Game Panel ───────────────────────────── */
+        #ui-layer { position: absolute; top: 16px; left: 16px; pointer-events: none; z-index: 10; height: calc(100vh - 32px); overflow-y: auto; }
+        /* Hilangkan scrollbar agar UI bersih */
+        #ui-layer::-webkit-scrollbar { display: none; }
+        .panel {
+            background: var(--surface); backdrop-filter: blur(12px); padding: 16px;
+            border-radius: var(--radius); box-shadow: var(--shadow); pointer-events: auto; width: 272px;
+        }
+        .panel-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+        .panel-icon { font-size: 24px; line-height: 1; }
+        .panel-titles h2 { margin: 0 0 2px 0; font-size: 16px; color: var(--dark); font-weight: 900; }
+        .panel-titles p { margin: 0; font-size: 11px; color: #64748b; line-height: 1.4; font-weight: 600; }
+
+        .toolbar-group { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+        .toolbar-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .group-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+
+        .controls { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tool-btn, .shape-btn {
+            flex: 1; min-width: 45px; padding: 7px 4px; border-radius: 10px; border: 2px solid transparent;
+            cursor: pointer; background: #f1f5f9; font-size: 11px; font-weight: 800; color: #64748b;
+            text-align: center; transition: all 0.15s; font-family: var(--font-body);
+        }
+        .tool-btn:hover { background: #e2e8f0; }
+        .tool-btn.active { background: var(--primary); color: white; border-color: var(--primary-dark); }
+        .tool-btn.danger.active { background: var(--danger); color: white; border-color: #b91c1c; }
+        .shape-btn:hover { background: #e2e8f0; }
+        .shape-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
+
+        #material-select {
+            width: 100%; padding: 8px 10px; border-radius: 10px; border: 2px solid #e2e8f0;
+            font-size: 13px; font-weight: 700; background: #f8fafc; outline: none; cursor: pointer;
+            font-family: var(--font-body); color: var(--dark);
+        }
+        #material-select:focus { border-color: var(--primary); }
+
+        /* Resource Chips */
+        #resource-display { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+        .res-chip {
+            display: flex; align-items: center; gap: 4px; background: #f8fafc;
+            border: 2px solid #e2e8f0; border-radius: 20px; padding: 3px 8px;
+            font-size: 11px; font-weight: 800; color: var(--dark); transition: all 0.2s; cursor:pointer;
+        }
+        .res-chip.active-res { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+        .res-chip.empty { opacity: 0.4; }
+        .res-chip .res-count { font-size: 13px; font-weight: 900; color: var(--success); }
+        .res-chip.empty .res-count { color: var(--danger); }
+
+        /* Timer Display */
+        #timer-display {
+            display: none; align-items: center; justify-content: center; gap: 8px;
+            background: linear-gradient(135deg, #fee2e2, #fecaca); border-radius: 10px;
+            padding: 8px 14px; margin-bottom: 10px; border: 2px solid #fca5a5;
+        }
+        #timer-display.show { display: flex; }
+        #timer-display.urgent { background: linear-gradient(135deg, #dc2626, #b91c1c); border-color: #7f1d1d; animation: timerPulse 0.5s infinite; }
+        #timer-display.urgent #timer-text { color: white; }
+        #timer-icon { font-size: 18px; }
+        #timer-text { font-size: 20px; font-weight: 900; color: #991b1b; font-family: var(--font-display); }
+        @keyframes timerPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+        /* Edu Card */
+        #edu-card {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7); border-left: 3px solid var(--warning);
+            padding: 9px 10px; border-radius: 8px; margin-top: 10px;
+        }
+        .edu-title { font-size: 10px; font-weight: 900; color: #d97706; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 3px; }
+        #edu-text { font-size: 11px; color: #78350f; line-height: 1.5; font-weight: 600; }
+
+        /* Rotate Button */
+        #rotate-btn {
+            background: var(--warning); color: white; border: none; border-radius: 8px;
+            padding: 3px 9px; cursor: pointer; font-size: 10px; font-weight: 800;
+            font-family: var(--font-body); box-shadow: 0 2px 0 #d97706;
+        }
+        #rotate-btn:active { transform: translateY(1px); box-shadow: none; }
+
+        /* Action Buttons */
+        .action-btn {
+            background: var(--success); color: white; border: none; padding: 12px;
+            border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%;
+            margin-top: 10px; box-shadow: 0 4px 0 #15803d; transition: all 0.15s;
+            font-family: var(--font-body);
+        }
+        .action-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #15803d; }
+        .action-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #15803d; }
+        .secondary-btn {
+            background: transparent; color: #94a3b8; border: 2px solid #e2e8f0;
+            padding: 8px; border-radius: 10px; font-size: 13px; font-weight: 800;
+            cursor: pointer; width: 100%; margin-top: 8px; transition: all 0.2s;
+            font-family: var(--font-body);
+        }
+        .secondary-btn:hover { background: #f1f5f9; color: var(--dark); }
+
+        /* Block Count Indicator */
+        #block-counter {
+            position: absolute; top: 60px; right: 16px; z-index: 10;
+            background: var(--surface); border-radius: 12px; padding: 8px 14px;
+            box-shadow: var(--shadow); font-size: 12px; font-weight: 800; color: #64748b;
+            display: none; align-items: center; gap: 6px;
+        }
+        #block-counter.show { display: flex; }
+        #block-count-num { font-size: 20px; font-weight: 900; color: var(--dark); font-family: var(--font-display); }
+
+        /* ── Level Clear / Fail Screen ───────────────── */
+        #level-clear, #level-fail {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.6);
+            background: white; padding: 40px 48px; border-radius: 24px; text-align: center;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.25); opacity: 0; pointer-events: none; z-index: 60;
+            transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1); min-width: 320px;
+        }
+        #level-clear.show, #level-fail.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+        #level-clear .win-icon, #level-fail .fail-icon { font-size: 64px; display: block; margin-bottom: 8px; }
+        #level-clear h1 { font-family: var(--font-display); color: var(--dark); font-size: 34px; margin: 0 0 6px 0; }
+        #level-clear p, #level-fail p { color: #64748b; font-size: 14px; margin: 0 0 16px 0; font-weight: 600; }
+        #level-fail h1 { font-family: var(--font-display); color: var(--danger); font-size: 34px; margin: 0 0 6px 0; }
+
+        /* Stars */
+        .stars-display { display: flex; justify-content: center; gap: 6px; margin: 12px 0; }
+        .star { font-size: 40px; filter: grayscale(1) opacity(0.3); transition: all 0.4s; transform: scale(0.7); }
+        .star.earned { filter: grayscale(0) opacity(1); transform: scale(1.1); animation: starPop 0.5s ease forwards; }
+        @keyframes starPop { 0%{transform:scale(0)} 60%{transform:scale(1.3)} 100%{transform:scale(1.1)} }
+        .blocks-used-label { font-size: 12px; color: #94a3b8; font-weight: 700; margin-bottom: 16px; }
+
+        /* Message Toast */
+        #message-box {
+            position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+            background: var(--dark); color: white; padding: 12px 22px; border-radius: 50px;
+            font-weight: 800; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            opacity: 0; transition: opacity 0.3s; z-index: 20; white-space: nowrap;
+        }
+        #message-box.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div id="top-bar">
+        <button class="lang-btn active" onclick="setLang('id')">🇮🇩 ID</button>
+        <button class="lang-btn"        onclick="setLang('en')">🇺🇸 EN</button>
+    </div>
+
+    <div id="landing-page" class="overlay-screen">
+        <div class="title-box">
+            <span class="title-badge" data-i18n="appTag">EDUKASI DRR</span>
+            <h1 data-i18n="title">Builder's Journey</h1>
+            <p data-i18n="subtitle">Susun balok, pelajari mitigasi bencana, dan selamatkan warga.</p>
+        </div>
+        <button class="menu-btn" onclick="showLevelSelect()" data-i18n="btnMission">🚨 Misi Evakuasi</button>
+        <button class="menu-btn sandbox" onclick="startGame('sandbox')" data-i18n="btnSandbox">🏖️ Mode Kotak Pasir</button>
+    </div>
+
+    <div id="level-select-page" class="overlay-screen hidden">
+        <div class="title-box">
+            <h1 data-i18n="selectLevel">Pilih Misi</h1>
+            <p data-i18n="selectDesc">Setiap misi mengajarkan keterampilan DRR yang berbeda.</p>
+        </div>
+        <div id="level-list"></div>
+        <button class="menu-btn back" onclick="showMainMenu()" data-i18n="backMenu">← Kembali</button>
+    </div>
+
+    <div id="ui-layer" class="hidden">
+        <div class="panel">
+            <div id="timer-display">
+                <span id="timer-icon">⏱️</span>
+                <span id="timer-text">90</span>
+            </div>
+            <div class="panel-header">
+                <span class="panel-icon" id="panel-icon">🏗️</span>
+                <div class="panel-titles">
+                    <h2 id="ui-title">Level 1</h2>
+                    <p id="ui-desc">Deskripsi misi</p>
+                </div>
+            </div>
+
+            <div class="toolbar-group">
+                <div class="group-label"><span data-i18n="tool">Aksi</span></div>
+                <div class="controls">
+                    <div class="tool-btn active" onclick="setTool('build',this)" data-i18n="build">🧱 Bangun</div>
+                    <div class="tool-btn danger" onclick="setTool('delete',this)" data-i18n="delete">🗑️ Hapus</div>
+                </div>
+            </div>
+
+            <div class="toolbar-group" id="build-tools">
+                <div class="group-label"><span data-i18n="material">Material</span></div>
+                <select id="material-select" onchange="setMaterial(this.value)"></select>
+                <div id="resource-display"></div>
+
+                <div class="group-label" style="margin-top:12px;">
+                    <span data-i18n="shapeBrick">Bentuk Bata (Brick)</span>
+                    <button id="rotate-btn" onclick="rotateBlock()" data-i18n="rotate">↻ Rotasi (R)</button>
+                </div>
+                <div class="controls">
+                    <div class="shape-btn active" onclick="setShape(1, 1, 'box', this)">1x1</div>
+                    <div class="shape-btn" onclick="setShape(1, 2, 'box', this)">1x2</div>
+                    <div class="shape-btn" onclick="setShape(1, 4, 'box', this)">1x4</div>
+                    <div class="shape-btn" onclick="setShape(2, 2, 'box', this)">2x2</div>
+                    <div class="shape-btn" onclick="setShape(2, 4, 'box', this)">2x4</div>
+                </div>
+
+                <div class="group-label" style="margin-top:10px;"><span data-i18n="shapeFlat">Gepeng (Plate & Tile)</span></div>
+                <div class="controls">
+                    <div class="shape-btn" onclick="setShape(1, 2, 'plate', this)">Plate 1x2</div>
+                    <div class="shape-btn" onclick="setShape(2, 4, 'plate', this)">Plate 2x4</div>
+                    <div class="shape-btn" onclick="setShape(1, 1, 'tile', this)">Tile 1x1</div>
+                    <div class="shape-btn" onclick="setShape(1, 2, 'tile', this)">Tile 1x2</div>
+                </div>
+
+                <div class="group-label" style="margin-top:10px;"><span data-i18n="shapeSpecial">Spesial (Rumah & Mobil)</span></div>
+                <div class="controls">
+                    <div class="shape-btn" onclick="setShape(1, 2, 'slope', this)" data-i18n="slopeBtn">Genteng</div>
+                    <div class="shape-btn" onclick="setShape(1, 1, 'wheel', this)" data-i18n="wheelBtn">Roda</div>
+                    <div class="shape-btn" onclick="setShape(1, 1, 'tree', this)" data-i18n="treeBtn">🌳 Pohon</div>
+                </div>
+
+                <div class="group-label" style="margin-top:10px;"><span data-i18n="shapeExtra">Ekstra Bentuk Baru</span></div>
+                <div class="controls">
+                    <div class="shape-btn" onclick="setShape(1, 1, 'cylinder', this)" data-i18n="cylinderBtn">Pilar</div>
+                    <div class="shape-btn" onclick="setShape(1, 1, 'pyramid', this)" data-i18n="pyramidBtn">Piramida</div>
+                    <div class="shape-btn" onclick="setShape(1, 2, 'wall', this)" data-i18n="wallBtn">Panel</div>
+                </div>
+
+                <div class="group-label" style="margin-top:10px;"><span data-i18n="shapeNature">Alam & Dekorasi</span></div>
+                <div class="controls">
+                    <div class="shape-btn" onclick="setShape(1, 1, 'palm_tree', this)" data-i18n="palmBtn">🌴 Sawit</div>
+                    <div class="shape-btn" onclick="setShape(1, 1, 'mangrove_tree', this)" data-i18n="mangroveBtn">🌿 Mangrove</div>
+                    <div class="shape-btn" onclick="setShape(1, 1, 'rock_shape', this)" data-i18n="rockBtn">🪨 Batu 3D</div>
+                    <div class="shape-btn" onclick="setShape(1, 2, 'door', this)" data-i18n="doorBtn">🚪 Pintu</div>
+                </div>
+
+                <div id="edu-card">
+                    <span class="edu-title">💡 DRR Fact</span>
+                    <span id="edu-text">Pilih material untuk melihat fakta DRR-nya.</span>
+                </div>
+            </div>
+
+            <button class="action-btn" id="btn-walk" onclick="startWalking()" data-i18n="run">▶ Mulai Evakuasi!</button>
+            <button class="secondary-btn" onclick="showMainMenu()" data-i18n="back">← Kembali ke Menu</button>
+        </div>
+    </div>
+
+    <div id="block-counter">
+        <span>🧱</span>
+        <span id="block-count-num">0</span>
+        <span data-i18n="blocksPlaced">balok</span>
+    </div>
+
+    <div id="level-clear">
+        <span class="win-icon">🎉</span>
+        <h1 data-i18n="winTitle">Evakuasi Sukses!</h1>
+        <p data-i18n="winDesc">Penduduk berhasil mencapai zona aman.</p>
+        <div class="stars-display">
+            <span class="star" id="star1">⭐</span>
+            <span class="star" id="star2">⭐</span>
+            <span class="star" id="star3">⭐</span>
+        </div>
+        <p class="blocks-used-label" id="blocks-used-label">0 balok digunakan</p>
+        <button class="action-btn" style="margin-top:8px;" onclick="nextMission()" data-i18n="nextBtn">Misi Berikutnya →</button>
+        <button class="secondary-btn" onclick="replayMission()" data-i18n="replayBtn">↺ Ulang Misi</button>
+        <button class="secondary-btn" onclick="showLevelSelect()">☰ Daftar Misi</button>
+    </div>
+
+    <div id="level-fail">
+        <span class="fail-icon">⏰</span>
+        <h1 data-i18n="failTitle">Waktu Habis!</h1>
+        <p data-i18n="failDesc">Banjir telah melanda sebelum evakuasi selesai.</p>
+        <button class="action-btn" style="background:var(--danger);box-shadow:0 4px 0 #b91c1c;margin-top:8px;" onclick="replayMission()" data-i18n="retryBtn">↺ Coba Lagi</button>
+        <button class="secondary-btn" onclick="showLevelSelect()">☰ Daftar Misi</button>
+    </div>
+
+    <div id="message-box"></div>
+    <div id="game-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script>
+
+    // =========================================================================
+    // ██████╗ ██╗      ██████╗  ██████╗██╗  ██╗    ██████╗ ███████╗ ██████╗
+    // ██╔══██╗██║     ██╔═══██╗██╔════╝██║ ██╔╝    ██╔══██╗██╔════╝██╔════╝
+    // ██████╔╝██║     ██║   ██║██║     █████╔╝     ██████╔╝█████╗  ██║  ███╗
+    // ██╔══██╗██║     ██║   ██║██║     ██╔═██╗     ██╔══██╗██╔══╝  ██║   ██║
+    // ██████╔╝███████╗╚██████╔╝╚██████╗██║  ██╗    ██║  ██║███████╗╚██████╔╝
+    // SECTION 1: BLOCK REGISTRY
+    // =========================================================================
+    const BLOCK_REGISTRY = {
+        // ── TERRAIN ──────────────────────────────────────────────────────────
+        ground: {
+            color: 0x7cb342, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Tanah (Ground)", en: "Ground / Soil" },
+            edu:  { id: "Tanah biasa yang menyerap air. Rentan longsor jika curam dan tanpa vegetasi.", en: "Basic soil that absorbs water. Prone to landslides if steep and without vegetation." }
+        },
+        rock: {
+            color: 0x78909c, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Batu Keras (Rock)", en: "Solid Rock" },
+            edu:  { id: "Material terkuat secara alami. Fondasi batu tahan erosi dan tekanan air besar.", en: "Strongest natural material. Rock foundations resist erosion and high water pressure." }
+        },
+        sand: {
+            color: 0xf0d060, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Pasir Pantai (Sand)", en: "Beach Sand" },
+            edu:  { id: "Pasir mudah terkikis ombak dan angin. Mangrove & vegetasi pantai bisa menstabilkannya.", en: "Sand erodes easily in waves and wind. Mangroves & coastal vegetation can stabilize it." }
+        },
+        mud: {
+            color: 0x6d4c41, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Lumpur (Mud)", en: "Mud" },
+            edu:  { id: "Tanah jenuh air sangat tidak stabil. Rawan longsor dan berbahaya untuk evakuasi.", en: "Water-saturated soil is very unstable. Prone to landslides and dangerous for evacuation." }
+        },
+
+        // ── BUILDING MATERIALS ────────────────────────────────────────────────
+        brick: {
+            color: 0xc0392b, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Bata Merah (Brick)", en: "Red Brick" },
+            edu:  { id: "Standar bangunan umum. Cukup kuat, namun bisa retak karena gempa atau tekanan air tinggi.", en: "Common building standard. Fairly strong, but can crack under earthquakes or high water pressure." }
+        },
+        wood: {
+            color: 0xd35400, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Kayu (Wood)", en: "Timber Wood" },
+            edu:  { id: "Fleksibel untuk menahan gempa ringan, namun mudah lapuk dan terbawa arus banjir.", en: "Flexible for minor earthquakes, but rots easily and can be swept away in floods." }
+        },
+        concrete: {
+            color: 0x90a4ae, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Beton Bertulang", en: "Reinforced Concrete" },
+            edu:  { id: "Material bangunan terkuat buatan manusia. Tahan gempa dan banjir jika dirancang dengan standar DRR.", en: "Strongest man-made building material. Earthquake and flood resistant when built to DRR standards." }
+        },
+        steel_beam: {
+            color: 0x546e7a, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Balok Baja (Steel)", en: "Steel Beam" },
+            edu:  { id: "Baja sangat kuat sekaligus fleksibel. Dipakai untuk jembatan modern yang tahan gempa dan banjir.", en: "Steel is extremely strong yet flexible. Used in modern bridges built to withstand earthquakes and floods." }
+        },
+        bamboo: {
+            color: 0x9ccc65, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Bambu (Bamboo)", en: "Bamboo" },
+            edu:  { id: "Material alami yang kuat, ringan, dan fleksibel. Di Asia, bambu adalah bahan utama jembatan darurat.", en: "Natural material that is strong, light, and flexible. In Asia, bamboo is a primary emergency bridge material." }
+        },
+        rope_bridge: {
+            color: 0xbcaaa4, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Papan Jembatan", en: "Bridge Plank" },
+            edu:  { id: "Papan kayu ringan untuk jembatan darurat. Bisa dipasang cepat saat evakuasi banjir.", en: "Lightweight wooden planks for emergency bridges. Can be deployed quickly during flood evacuation." }
+        },
+
+        // ── FLOOD & DAM DEFENSE ───────────────────────────────────────────────
+        sandbag: {
+            color: 0xa1887f, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Karung Pasir (Sandbag)", en: "Sandbag" },
+            edu:  { id: "Pertahanan banjir paling tradisional di dunia. Karung pasir menahan air dan bisa jadi jalur darurat yang bisa diinjak.", en: "World's most traditional flood defense. Sandbags hold back water and can serve as emergency walkways." }
+        },
+        dam_block: {
+            color: 0x37474f, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Blok Bendungan (Dam)", en: "Dam Block" },
+            edu:  { id: "Blok beton berat untuk konstruksi bendungan darurat. Menahan tekanan air yang sangat kuat dan mencegah banjir melebar.", en: "Heavy concrete blocks for emergency dam construction. Withstand extreme water pressure and prevent flood spreading." }
+        },
+
+        // ── HAZARDS ───────────────────────────
+        water: {
+            color: 0x2196f3, opacity: 0.72, effect: 'ripple', isWalkable: false, playerBuildable: false,
+            name: { id: "Air Banjir", en: "Flood Water" },
+            edu:  { id: "Air dalam tidak bisa dilalui jalan kaki. Bangun jembatan atau tumpuk karung pasir!", en: "Deep water cannot be crossed on foot. Build a bridge or stack sandbags!" }
+        },
+        lava: {
+            color: 0xff5722, opacity: 0.92, effect: 'ripple', isWalkable: false, playerBuildable: false,
+            name: { id: "Lava Vulkanik", en: "Volcanic Lava" },
+            edu:  { id: "Aliran lava mencapai 1200°C. Tidak ada material buatan manusia yang bisa menahannya. Satu-satunya cara: EVAKUASI!", en: "Lava flows reach 1200°C. No man-made material can withstand it. The only option: EVACUATE!" }
+        },
+        debris: {
+            color: 0x5d4037, opacity: 1.0, effect: 'none', isWalkable: false, playerBuildable: false,
+            name: { id: "Puing Gempa (Debris)", en: "Earthquake Debris" },
+            edu:  { id: "Reruntuhan bangunan akibat gempa sangat berbahaya. Tim SAR harus membangun jalur alternatif untuk evakuasi.", en: "Building rubble from earthquakes is extremely dangerous. SAR teams must build alternative routes for evacuation." }
+        },
+        fire: {
+            color: 0xff7043, opacity: 0.9, effect: 'flicker', isWalkable: false, playerBuildable: false,
+            name: { id: "Api / Kebakaran", en: "Fire / Blaze" },
+            edu:  { id: "Zona api tidak bisa dilewati! Dalam bencana gabungan, kebakaran dan banjir bisa terjadi bersamaan.", en: "Fire zones cannot be crossed! In compound disasters, fires and floods can happen simultaneously." }
+        },
+
+        // ── VEGETATION ────────────────────────────────────────────────────────
+        mangrove: {
+            color: 0x2e7d32, opacity: 1.0, effect: 'none', isWalkable: false, playerBuildable: true,
+            shapeDefinition: 'tree',
+            name: { id: "Mangrove", en: "Mangrove Tree" },
+            edu:  { id: "Hutan mangrove adalah 'pahlawan alam' DRR. Akar mangrove menahan ombak tsunami dan mencegah erosi pantai.", en: "Mangrove forests are 'natural heroes' of DRR. Mangrove roots absorb tsunami waves and prevent coastal erosion." }
+        },
+
+        // ── SPECIAL / OBJECTIVE ───────────────────────────────────────────────
+        goal: {
+            color: 0xf1c40f, opacity: 1.0, effect: 'glow_float', isWalkable: true, playerBuildable: false,
+            name: { id: "Zona Aman (Safe Zone)", en: "Safe Zone" },
+            edu:  { id: "Zona evakuasi akhir. Tandai titik ini di komunitasmu sebagai bagian dari rencana evakuasi!", en: "Final evacuation zone. Mark this point in your community as part of the evacuation plan!" }
+        },
+        checkpoint: {
+            color: 0x00acc1, opacity: 1.0, effect: 'glow_float', isWalkable: true, playerBuildable: false,
+            name: { id: "Titik Kumpul", en: "Assembly Point" },
+            edu:  { id: "Titik kumpul sementara sebelum menuju zona aman. Penting dalam rencana evakuasi multi-tahap.", en: "Temporary assembly point before reaching the safe zone. Important in multi-stage evacuation plans." }
+        },
+        // ── PLAYER / NPC ──────────────────────────────────────────────────────
+        player: {
+            color: 0x8b5cf6, opacity: 1.0, effect: 'none', isWalkable: false, playerBuildable: false,
+            shapeDefinition: 'humanoid',
+            name: { id: "Penduduk", en: "Villager" },
+            edu:  { id: "Warga yang harus diselamatkan melalui jalur evakuasi.", en: "Citizen to be rescued via the evacuation route." }
+        },
+
+        // -- MATERIAL TAMBAHAN KENDARAAN & RUMAH --
+        glass: { 
+            color: 0x87CEEB, opacity: 0.3, effect: 'none', isWalkable: false, playerBuildable: true,
+            name: {id: "Kaca Jendela", en: "Window Glass"}, 
+            edu: {id: "Rapuh, tapi bisa melihat keluar.", en: "Fragile, but transparent."}
+        },
+        rubber: { 
+            color: 0x222222, opacity: 1.0, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: {id: "Karet Ban", en: "Tire Rubber"}, 
+            edu: {id: "Material empuk untuk roda.", en: "Soft material for wheels."}
+        },
+        lamp_red: { 
+            color: 0xff0000, opacity: 0.9, effect: 'glow_static', isWalkable: false, playerBuildable: true,
+            name: {id: "Lampu Merah", en: "Red Lamp"}, 
+            edu: {id: "Lampu peringatan atau rem.", en: "Warning or brake light."}
+        },
+        water_gate: {
+            color: 0x0288d1, opacity: 0.9, effect: 'none', isWalkable: true, playerBuildable: true,
+            name: { id: "Pintu Air (Gate)", en: "Water Gate" },
+            edu:  { id: "Mengontrol debit air yang keluar dari bendungan agar lembah di bawahnya tidak kebanjiran.", en: "Controls the water flow from the dam to prevent the valley below from flooding." }
+        }
+
+    };
+
+    // =========================================================================
+    // SECTION 2: MISSION REGISTRY
+    // =========================================================================
+    const MISSION_REGISTRY = [
+        {
+            id: "level_1",
+            title:      { id: "Level 1: Banjir Bandang", en: "Level 1: Flash Flood" },
+            desc:       { id: "Air naik! Buat jalur di atas air menuju dataran tinggi.", en: "Water rises! Build a path over the water to high ground." },
+            drrTopic:   "flood", difficulty: "easy", icon: "🌊",
+            drrLesson:  { id: "Jembatan dan karung pasir adalah alat evakuasi banjir yang paling umum.", en: "Bridges and sandbags are the most common flood evacuation tools." },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 5, y: 0, z: 0 },
+            resources: null, 
+            parBlocks: 3,
+            timeLimit: null,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'rock',  w: 3, d: 3, isStatic: true },
+                { x:  3, y: 0, z: -1, mat: 'water', w: 4, d: 3, isStatic: true },
+                { x:  8, y: 0, z: -1, mat: 'rock',  w: 3, d: 3, isStatic: true },
+                { x:  9, y: 1, z:  0, mat: 'goal',  w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_2",
+            title:      { id: "Level 2: Jurang Lebar", en: "Level 2: Wide Gap" },
+            desc:       { id: "Gunakan bentuk 1×2 dan Rotasi (R) untuk membuat jembatan.", en: "Use 1×2 blocks and Rotate (R) to bridge the wide gap." },
+            drrTopic:   "flood", difficulty: "easy", icon: "🏗️",
+            drrLesson:  { id: "Jembatan yang efisien menghemat material dan waktu saat darurat.", en: "Efficient bridges save materials and time during emergencies." },
+            playerStart: { x: 0, y: 2, z: 0 },
+            cameraTarget: { x: 3, y: 0, z: 0 },
+            resources: null,
+            parBlocks: 4,
+            timeLimit: null,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'ground', w: 2, d: 2, isStatic: true },
+                { x: -1, y: 1, z: -1, mat: 'ground', w: 1, d: 1, isStatic: true },
+                { x:  6, y: 0, z: -1, mat: 'rock',   w: 2, d: 2, isStatic: true },
+                { x:  6, y: 1, z:  0, mat: 'goal',   w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_3",
+            title:      { id: "Level 3: Tebing Curam", en: "Level 3: Steep Cliff" },
+            desc:       { id: "Bangun tangga bertahap untuk evakuasi ke puncak bukit.", en: "Build step-by-step stairs to evacuate to the hilltop." },
+            drrTopic:   "landslide", difficulty: "easy", icon: "⛰️",
+            drrLesson:  { id: "Jalur evakuasi vertikal sangat penting di daerah pegunungan rawan longsor.", en: "Vertical evacuation routes are critical in mountainous areas prone to landslides." },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 2, y: 1, z: 2 },
+            resources: null,
+            parBlocks: 6,
+            timeLimit: null,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'ground', w: 2, d: 2, isStatic: true },
+                { x:  4, y: 0, z:  2, mat: 'rock', w: 2, d: 2, isStatic: true },
+                { x:  4, y: 1, z:  2, mat: 'rock', w: 2, d: 2, isStatic: true },
+                { x:  4, y: 2, z:  2, mat: 'rock', w: 2, d: 2, isStatic: true },
+                { x:  4, y: 3, z:  2, mat: 'goal', w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_4",
+            title:      { id: "Level 4: Bendungan Darurat", en: "Level 4: Emergency Dam" },
+            desc:       { id: "Banjir besar! Gunakan karung pasir untuk membangun jalur evakuasi di atas air.", en: "Major flood! Use sandbags to build an evacuation route over the water." },
+            drrTopic:   "flood", difficulty: "medium", icon: "🌊",
+            drrLesson:  { id: "Karung pasir telah digunakan ribuan tahun sebagai pertahanan banjir darurat yang efektif.", en: "Sandbags have been used for thousands of years as effective emergency flood defenses." },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 6, y: 0, z: 0 },
+            resources: { sandbag: 14, wood: 5 },
+            parBlocks: 7,
+            timeLimit: null,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'rock',  w: 3, d: 3, isStatic: true },
+                { x:  2, y: 0, z: -1, mat: 'water', w: 7, d: 3, isStatic: true },
+                { x:  9, y: 0, z: -1, mat: 'rock',  w: 3, d: 3, isStatic: true },
+                { x: 10, y: 1, z:  0, mat: 'goal',  w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_5",
+            title:      { id: "Level 5: Lintas Lava Vulkanik", en: "Level 5: Volcanic Lava Crossing" },
+            desc:       { id: "Gunung meletus! Bangun jembatan baja melewati dua aliran lava.", en: "Volcano erupts! Build steel bridges across two lava streams." },
+            drrTopic:   "volcano", difficulty: "medium", icon: "🌋",
+            drrLesson:  { id: "Saat gunung berapi meletus, jalur evakuasi harus direncanakan SEBELUM bencana terjadi.", en: "When a volcano erupts, evacuation routes must be planned BEFORE the disaster strikes." },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 6, y: 0, z: 0 },
+            resources: { steel_beam: 8, concrete: 6 },
+            parBlocks: 6,
+            timeLimit: null,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x:  2, y: 0, z: -1, mat: 'lava',  w: 3, d: 3, isStatic: true },
+                { x:  5, y: 0, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x:  8, y: 0, z: -1, mat: 'lava',  w: 3, d: 3, isStatic: true },
+                { x: 11, y: 0, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x: 11, y: 1, z:  0, mat: 'goal',  w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_6",
+            title:      { id: "Level 6: Lorong Puing Gempa", en: "Level 6: Earthquake Debris Alley" },
+            desc:       { id: "Gempa bumi menghancurkan jalan! Bangun jalur tinggi melewati puing-puing berbahaya.", en: "Earthquake destroys the road! Build an elevated route over dangerous debris." },
+            drrTopic:   "earthquake", difficulty: "medium", icon: "🏚️",
+            drrLesson:  { id: "Setelah gempa, puing bangunan menjadi hambatan utama evakuasi. Jalan tinggi atau alternatif sangat dibutuhkan.", en: "After earthquakes, building rubble becomes the main evacuation barrier. Elevated or alternative routes are critical." },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 5, y: 0, z: 0 },
+            resources: { concrete: 10, steel_beam: 6 },
+            parBlocks: 7,
+            timeLimit: null,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'ground', w: 2, d: 3, isStatic: true },
+                { x:  2, y: 0, z:  0, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  3, y: 0, z: -1, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  3, y: 0, z:  1, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  4, y: 0, z:  0, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  5, y: 0, z: -1, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  5, y: 0, z:  1, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  6, y: 0, z:  0, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  8, y: 0, z: -1, mat: 'rock',   w: 2, d: 3, isStatic: true },
+                { x:  8, y: 1, z:  0, mat: 'goal',   w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_7",
+            title:      { id: "Level 7: Tembok Laut Tsunami", en: "Level 7: Tsunami Seawall" },
+            desc:       { id: "Peringatan tsunami! Bangun tanggul laut lalu evakuasi ke dataran tinggi sebelum waktu habis!", en: "Tsunami warning! Build a seawall then evacuate to high ground before time runs out!" },
+            drrTopic:   "tsunami", difficulty: "hard", icon: "🌊",
+            drrLesson:  { id: "Tembok laut (seawall) mengurangi kecepatan dan kekuatan tsunami. Waktu adalah nyawa saat tsunami!", en: "Seawalls reduce the speed and force of tsunamis. Time is life during a tsunami!" },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 5, y: 1, z: 0 },
+            resources: { dam_block: 10, concrete: 8 },
+            parBlocks: 8,
+            timeLimit: 100,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'sand',  w: 4, d: 3, isStatic: true },
+                { x:  3, y: 0, z: -1, mat: 'water', w: 5, d: 3, isStatic: true },
+                { x:  8, y: 0, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x:  8, y: 1, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x:  8, y: 2, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x:  8, y: 3, z:  0, mat: 'goal',  w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_8",
+            title:      { id: "Level 8: Pantai Mangrove", en: "Level 8: Mangrove Coast" },
+            desc:       { id: "Tanam mangrove di pantai pasir, lalu bangun jembatan ke daratan tinggi!", en: "Plant mangroves on the sandy beach, then bridge across to high ground!" },
+            drrTopic:   "coastal", difficulty: "medium", icon: "🌿",
+            drrLesson:  { id: "Mangrove bisa mereduksi kecepatan gelombang tsunami hingga 30%. Ini adalah solusi DRR berbasis alam.", en: "Mangroves can reduce tsunami wave speed by up to 30%. This is a nature-based DRR solution." },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 5, y: 0, z: 0 },
+            resources: { mangrove: 8, bamboo: 8, rope_bridge: 6 },
+            parBlocks: 8,
+            timeLimit: null,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'ground', w: 3, d: 3, isStatic: true },
+                { x:  2, y: 0, z: -1, mat: 'sand',   w: 3, d: 3, isStatic: true },
+                { x:  5, y: 0, z: -1, mat: 'water',  w: 3, d: 3, isStatic: true },
+                { x:  8, y: 0, z: -1, mat: 'rock',   w: 3, d: 3, isStatic: true },
+                { x:  8, y: 1, z:  0, mat: 'goal',   w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_9",
+            title:      { id: "Level 9: Banjir Bandang Berlapis", en: "Level 9: Multi-Stage Flash Flood" },
+            desc:       { id: "Air terus naik! Bangun tiga jembatan sebelum banjir mencapai puncak!", en: "Water keeps rising! Build three bridges before the flood reaches its peak!" },
+            drrTopic:   "flood", difficulty: "hard", icon: "⚡",
+            drrLesson:  { id: "Banjir bandang dapat terjadi dalam hitungan menit. Rencana evakuasi dini menyelamatkan nyawa!", en: "Flash floods can occur in minutes. Early evacuation planning saves lives!" },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 8, y: 0, z: 0 },
+            resources: { wood: 14, bamboo: 10, rope_bridge: 8 },
+            parBlocks: 9,
+            timeLimit: 120,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x:  2, y: 0, z: -1, mat: 'water', w: 2, d: 3, isStatic: true },
+                { x:  4, y: 0, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x:  7, y: 0, z: -1, mat: 'water', w: 2, d: 3, isStatic: true },
+                { x:  9, y: 0, z: -1, mat: 'rock',  w: 2, d: 3, isStatic: true },
+                { x: 12, y: 0, z: -1, mat: 'water', w: 2, d: 3, isStatic: true },
+                { x: 14, y: 0, z: -1, mat: 'rock',  w: 3, d: 3, isStatic: true },
+                { x: 14, y: 1, z:  0, mat: 'goal',  w: 1, d: 1, isStatic: true }
+            ]
+        },
+        {
+            id: "level_10",
+            title:      { id: "Level 10: Bencana Majemuk 🆘", en: "Level 10: Compound Disaster 🆘" },
+            desc:       { id: "Gempa + banjir + lava! Navigasi jalur paling sulit menuju zona aman terakhir.", en: "Earthquake + flood + lava! Navigate the hardest route to the final safe zone." },
+            drrTopic:   "multihazard", difficulty: "hard", icon: "🆘",
+            drrLesson:  { id: "Bencana majemuk semakin sering terjadi akibat perubahan iklim. Rencana multi-bahaya adalah kebutuhan mutlak!", en: "Compound disasters are increasingly common due to climate change. Multi-hazard planning is an absolute necessity!" },
+            playerStart: { x: 0, y: 1, z: 0 },
+            cameraTarget: { x: 7, y: 0, z: 0 },
+            resources: { concrete: 10, steel_beam: 8, sandbag: 8, dam_block: 6 },
+            parBlocks: 10,
+            timeLimit: 150,
+            grid: [
+                { x: -1, y: 0, z: -1, mat: 'rock',   w: 2, d: 3, isStatic: true },
+                { x:  2, y: 0, z:  0, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  3, y: 0, z: -1, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  3, y: 0, z:  1, mat: 'debris', w: 1, d: 1, isStatic: true },
+                { x:  4, y: 0, z: -1, mat: 'mud',    w: 2, d: 3, isStatic: true },
+                { x:  7, y: 0, z: -1, mat: 'water',  w: 3, d: 3, isStatic: true },
+                { x: 10, y: 0, z:  0, mat: 'rock',   w: 1, d: 1, isStatic: true },
+                { x: 12, y: 0, z: -1, mat: 'lava',   w: 3, d: 3, isStatic: true },
+                { x: 11, y: 0, z: -1, mat: 'fire',   w: 1, d: 3, isStatic: true },
+                { x: 15, y: 0, z: -1, mat: 'rock',   w: 2, d: 3, isStatic: true },
+                { x: 15, y: 1, z:  0, mat: 'goal',   w: 1, d: 1, isStatic: true }
+            ]
+        },
+        // ── LEVEL 11 ──────────────────────────────────────────────────────────
+        {
+            id: "level_11",
+            title:      { id: "Level 11: Mega Bendungan Lembah", en: "Level 11: Valley Mega Dam" },
+            desc:       { id: "Misi Epik! Bangun bendungan raksasa melintasi sungai lebar dan buat jalur naik ke puncak tebing. Tidak ada batas waktu, bebas berkreasi!", en: "Epic Mission! Build a massive dam across the wide river and a path up the high cliff. No time limit, be creative!" },
+            drrTopic:   "flood", difficulty: "hard", icon: "🛡️",
+            drrLesson:  { id: "Infrastruktur DRR skala besar seperti bendungan raksasa membutuhkan perencanaan struktur yang kuat dan jalur evakuasi berlapis.", en: "Large-scale DRR infrastructure like mega dams require strong structural planning and multi-layered evacuation routes." },
+            
+            playerStart: { x: 0, y: 2, z: 0 },
+            cameraTarget: { x: 6, y: 2, z: 0 }, // Kamera digeser ke tengah sungai
+            
+            // Stok balok dibuat sangat banyak agar bisa membangun struktur rumit
+            resources: { dam_block: 30, rock: 25, concrete: 25, wood: 40, water_gate: 5, brick: 30, rope_bridge: 15 },
+            parBlocks: 35, // Batas untuk dapat 3 bintang dinaikkan
+            timeLimit: null, // Tanpa Timer! Pemain bisa santai membangun
+            
+            grid: [
+                // 1. Dataran Kiri (Start Area) - Dibuat agak tinggi (2 layer)
+                { x: -2, y: 0, z: -2, mat: 'ground', w: 4, d: 5, isStatic: true },
+                { x: -2, y: 1, z: -2, mat: 'ground', w: 4, d: 5, isStatic: true },
+
+                // 2. Area Sungai/Banjir (Tengah) - Sangat lebar
+                { x:  2, y: 0, z: -2, mat: 'water', w: 8, d: 5, isStatic: true },
+                { x:  2, y: 1, z: -2, mat: 'water', w: 8, d: 5, isStatic: true },
+
+                // 3. Pijakan di tengah air (Sisa reruntuhan/pulau kecil untuk tumpuan jembatan)
+                { x:  4, y: 0, z: -1, mat: 'rock', w: 2, d: 2, isStatic: true },
+                { x:  4, y: 1, z: -1, mat: 'rock', w: 2, d: 2, isStatic: true },
+                { x:  7, y: 0, z:  0, mat: 'rock', w: 2, d: 2, isStatic: true },
+                { x:  7, y: 1, z:  0, mat: 'rock', w: 2, d: 2, isStatic: true },
+
+                // 4. Tebing Kanan (Safe Zone) - Berundak dan sangat tinggi
+                // Base tebing
+                { x: 10, y: 0, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
+                { x: 10, y: 1, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
+                { x: 10, y: 2, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
+                // Undakan kedua
+                { x: 11, y: 3, z: -2, mat: 'rock', w: 3, d: 5, isStatic: true },
+                { x: 11, y: 4, z: -2, mat: 'rock', w: 3, d: 5, isStatic: true },
+                // Puncak tebing
+                { x: 12, y: 5, z: -2, mat: 'rock', w: 2, d: 5, isStatic: true },
+                { x: 12, y: 6, z: -2, mat: 'rock', w: 2, d: 5, isStatic: true },
+
+                // 5. Zona Aman (Goal) di puncak tebing tertinggi
+                { x: 12, y: 7, z:  0, mat: 'goal', w: 1, d: 1, isStatic: true }
+            ]
+        }
+    ];
+
+    const i18n = {
+        id: {
+            appTag: "EDUKASI DRR", title: "Builder's Journey",
+            subtitle: "Susun balok, pelajari mitigasi bencana (DRR), dan selamatkan warga!",
+            btnMission: "🚨 Misi Evakuasi", btnSandbox: "🏖️ Mode Kotak Pasir",
+            selectLevel: "Pilih Misi DRR", selectDesc: "Setiap misi mengajarkan keterampilan DRR yang berbeda.",
+            backMenu: "← Kembali",
+            tool: "Aksi / Alat", build: "🧱 Bangun", delete: "🗑️ Hapus",
+            material: "Material & Lingkungan",
+            shapeBrick: "Bentuk Bata (Brick)", shapeFlat: "Gepeng (Plate/Tile)", shapeSpecial: "Spesial (Rumah/Mobil)", 
+            shapeExtra: "Ekstra Bentuk Baru", shapeNature: "Alam & Dekorasi",
+            palmBtn: "🌴 Sawit", mangroveBtn: "🌿 Mangrove", rockBtn: "🪨 Batu 3D", doorBtn: "🚪 Pintu",
+            rotate: "↻ Rotasi (R)", treeBtn: "🌳 Pohon", slopeBtn: "Genteng", wheelBtn: "Roda",
+            cylinderBtn: "Pilar", pyramidBtn: "Piramida", wallBtn: "Panel",
+            run: "▶ Mulai Evakuasi!", back: "← Kembali ke Menu",
+            winTitle: "Evakuasi Sukses!", winDesc: "Penduduk berhasil mencapai zona aman!",
+            nextBtn: "Misi Berikutnya →", replayBtn: "↺ Ulang Misi",
+            failTitle: "Waktu Habis!", failDesc: "Banjir telah melanda sebelum evakuasi selesai. Coba lagi!",
+            retryBtn: "↺ Coba Lagi",
+            blocksPlaced: "balok",
+            sandboxTitle: "Kotak Pasir Edukasi", sandboxDesc: "Bangun lingkunganmu bebas. Pelajari semua material dan skenario DRR.",
+            msgBuntu: "Jalan buntu! Penduduk butuh jembatan, tangga, atau jalur alternatif.",
+            msgSelesai: "Semua misi selesai! Kamu adalah pahlawan DRR!",
+            msgNoResource: "Stok material habis! Hapus balok yang tidak perlu.",
+            msgStatic: "Balok ini tidak bisa dihapus (bagian dari skenario).",
+            difficulty_easy: "Mudah", difficulty_medium: "Sedang", difficulty_hard: "Sulit",
+            timer_label: "Detik Tersisa", stars3: "Efisien! (3 bintang)", stars2: "Bagus! (2 bintang)", stars1: "Berhasil! (1 bintang)",
+            drrTopic_flood: "Banjir", drrTopic_volcano: "Vulkanik", drrTopic_earthquake: "Gempa", drrTopic_tsunami: "Tsunami",
+            drrTopic_coastal: "Pesisir", drrTopic_landslide: "Longsor", drrTopic_multihazard: "Multi-Bahaya",
+            unlimited: "Tak Terbatas", used: "digunakan"
+        },
+        en: {
+            appTag: "DRR EDUCATION", title: "Builder's Journey",
+            subtitle: "Place blocks, learn Disaster Risk Reduction (DRR), and save lives!",
+            btnMission: "🚨 Evacuation Mission", btnSandbox: "🏖️ Sandbox Mode",
+            selectLevel: "Select DRR Mission", selectDesc: "Each mission teaches a different DRR skill.",
+            backMenu: "← Back",
+            tool: "Action / Tool", build: "🧱 Build", delete: "🗑️ Delete",
+            material: "Material & Terrain",
+            shapeBrick: "Brick Shapes", shapeFlat: "Flat (Plate/Tile)", shapeSpecial: "Special (House/Car)", 
+            shapeExtra: "Extra New Shapes", shapeNature: "Nature & Decor",
+            palmBtn: "🌴 Palm", mangroveBtn: "🌿 Mangrove", rockBtn: "🪨 3D Rock", doorBtn: "🚪 Door",
+            rotate: "↻ Rotate (R)", treeBtn: "🌳 Tree", slopeBtn: "Roof Slope", wheelBtn: "Wheel",
+            cylinderBtn: "Pillar", pyramidBtn: "Pyramid", wallBtn: "Wall Panel",
+            run: "▶ Start Evacuation!", back: "← Back to Menu",
+            winTitle: "Evacuation Success!", winDesc: "The villager safely reached the safe zone!",
+            nextBtn: "Next Mission →", replayBtn: "↺ Replay Mission",
+            failTitle: "Time's Up!", failDesc: "The flood struck before evacuation was complete. Try again!",
+            retryBtn: "↺ Try Again",
+            blocksPlaced: "blocks",
+            sandboxTitle: "Educational Sandbox", sandboxDesc: "Build freely. Explore all materials and DRR scenarios.",
+            msgBuntu: "Dead end! The villager needs a bridge, stairs, or alternative route.",
+            msgSelesai: "All missions complete! You are a DRR hero!",
+            msgNoResource: "Out of this material! Delete unused blocks to recover some.",
+            msgStatic: "This block cannot be deleted (it's part of the scenario).",
+            difficulty_easy: "Easy", difficulty_medium: "Medium", difficulty_hard: "Hard",
+            timer_label: "Seconds Left", stars3: "Efficient! (3 stars)", stars2: "Great! (2 stars)", stars1: "Completed! (1 star)",
+            drrTopic_flood: "Flood", drrTopic_volcano: "Volcanic", drrTopic_earthquake: "Earthquake", drrTopic_tsunami: "Tsunami",
+            drrTopic_coastal: "Coastal", drrTopic_landslide: "Landslide", drrTopic_multihazard: "Multi-Hazard",
+            unlimited: "Unlimited", used: "used"
+        }
+    };
+
+    let currentLang = 'id';
+
+    const container = document.getElementById('game-container');
+    const scene     = new THREE.Scene();
+    scene.background = new THREE.Color(0xdde4f0);
+    scene.fog        = new THREE.Fog(0xdde4f0, 30, 60);
+
+    const aspect = window.innerWidth / window.innerHeight;
+    const d = 11;
+    const camera = new THREE.OrthographicCamera(-d*aspect, d*aspect, d, -d, 1, 1000);
+    camera.position.set(20, 25, 20);
+    camera.lookAt(0,0,0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.06;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+    controls.minDistance = 5; controls.maxDistance = 40; 
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+    const dirLight = new THREE.DirectionalLight(0xfffbf0, 0.65);
+    dirLight.position.set(12, 22, 12);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048; dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.left=-20; dirLight.shadow.camera.right=20;
+    dirLight.shadow.camera.top=20;  dirLight.shadow.camera.bottom=-20;
+    scene.add(dirLight);
+    const fillLight = new THREE.DirectionalLight(0xd0e8ff, 0.3);
+    fillLight.position.set(-8, 10, -8); scene.add(fillLight);
+
+    const groundGeo = new THREE.PlaneGeometry(80,80); groundGeo.rotateX(-Math.PI/2);
+    const groundMesh = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: 0xcdd5e0, roughness: 1 }));
+    groundMesh.position.y = -0.01; groundMesh.receiveShadow = true; scene.add(groundMesh);
+
+    let gameMode         = 'menu';
+    let currentMissionIdx = 0;
+    let isWalking        = false;
+    let activeTool       = 'build';
+
+    const blockSize      = 1;
+    const blockHeight    = 0.5;
+
+    let currentMaterialKey = 'ground';
+    let currentShapeW = 1, currentShapeD = 1, currentShapeType = 'box';
+
+    const interactables   = [];
+    let gridState         = {};
+    let targetGridKeys    = [];
+    let physicalBricks    = [];
+    let currentResources  = null;
+    let placedBlocksCount = 0;
+    let missionTimeLimit  = null;
+    let timerSecondsLeft  = 0;
+    let timerInterval     = null;
+
+    const materialCache   = {};
+    function getMat(colorHex, opacity = 1.0, emissive = 0x000000, emissiveInt = 0) {
+        const key = `${colorHex}_${opacity}_${emissive}_${emissiveInt}`;
+        if (!materialCache[key]) {
+            materialCache[key] = new THREE.MeshStandardMaterial({
+                color: colorHex, roughness: 0.35, metalness: 0.08,
+                transparent: opacity < 1.0, opacity, depthWrite: opacity === 1.0,
+                emissive: emissive, emissiveIntensity: emissiveInt
+            });
+        }
+        return materialCache[key];
+    }
+
+    function createBrickMesh(matKey, w, d, shapeOverride) {
+        const group = new THREE.Group();
+        const data  = BLOCK_REGISTRY[matKey] || BLOCK_REGISTRY.ground;
+        const shape = shapeOverride || data.shapeDefinition || 'box';
+        const mat   = getMat(data.color, data.opacity);
+
+        if (shape === 'tree') {
+            const trunkColor = (matKey === 'mangrove') ? 0x3e2723 : 0x8d6e63;
+            const leafColor  = data.color;
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.18, blockHeight * 1.2, 8), getMat(trunkColor));
+            trunk.position.y = 0; trunk.castShadow = true;
+            const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(0.42), getMat(leafColor));
+            leaves.position.y = blockHeight * 0.9; leaves.castShadow = true;
+            trunk.add(leaves); group.add(trunk);
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockHeight, blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            hb.position.y = 0; group.add(hb);
+
+        } else if (shape === 'humanoid') {
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 16), mat);
+            body.position.y = 0.28; body.castShadow = true; group.add(body);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), mat);
+            head.position.y = 0.66; head.castShadow = true; group.add(head);
+            const armMat = getMat(data.color);
+            const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8);
+            const lArm = new THREE.Mesh(armGeo, armMat); lArm.position.set(-0.28, 0.3, 0); lArm.rotation.z = 0.4; group.add(lArm);
+            const rArm = new THREE.Mesh(armGeo, armMat); rArm.position.set( 0.28, 0.3, 0); rArm.rotation.z = -0.4; group.add(rArm);
+
+        } else if (shape === 'debris') {
+            for (let i=0; i<4; i++) {
+                const piece = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.3+Math.random()*0.4, 0.1+Math.random()*0.25, 0.3+Math.random()*0.4),
+                    getMat(data.color, 1.0)
+                );
+                piece.position.set((Math.random()-0.5)*0.6, Math.random()*0.1, (Math.random()-0.5)*0.6);
+                piece.rotation.y = Math.random() * Math.PI; piece.castShadow = true; group.add(piece);
+            }
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(w*blockSize, blockHeight, d*blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else if (shape === 'plate' || shape === 'tile') {
+            const h = blockHeight / 3;
+            const mainMesh = new THREE.Mesh(new THREE.BoxGeometry(w * blockSize, h, d * blockSize), mat);
+            mainMesh.position.y = -(blockHeight/2) + (h/2); 
+            group.add(mainMesh);
+            if (shape === 'plate') {
+                const studGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.08, 16);
+                for(let i=0; i<w; i++){
+                    for(let j=0; j<d; j++){
+                        const stud = new THREE.Mesh(studGeo, mat);
+                        stud.position.set((i + 0.5) * blockSize - (w * blockSize)/2, -(blockHeight/2) + h + 0.04, (j + 0.5) * blockSize - (d * blockSize)/2);
+                        group.add(stud);
+                    }
+                }
+            }
+            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w * blockSize, h, d * blockSize), new THREE.MeshBasicMaterial({visible:false}));
+            hitbox.position.y = -(blockHeight/2) + (h/2);
+            group.add(hitbox);
+
+            } else if (shape === 'slope') {
+            // Menentukan orientasi rotasi berdasarkan dimensi W dan D
+            const isRotated = d > w;
+            const sLen = isRotated ? d : w; // Panjang kemiringan (biasanya 2 unit)
+            const sDep = isRotated ? w : d; // Lebar balok
+
+            // Membuat Profil 2D Genteng LEGO (Wedge dengan bagian atas datar)
+            const shape2D = new THREE.Shape();
+            const topFlatPart = 0.4; // Seberapa lebar bagian datar di atas (untuk stud)
+            
+            shape2D.moveTo(0, 0); 
+            shape2D.lineTo(sLen * blockSize, 0); // Dasar bawah
+            shape2D.lineTo(sLen * blockSize, 0.1); // Ujung tipis di depan
+            shape2D.lineTo(topFlatPart * blockSize, blockHeight); // Garis miring (Slope)
+            shape2D.lineTo(0, blockHeight); // Bagian datar atas
+            shape2D.lineTo(0, 0); // Garis vertikal belakang
+
+            const extrudeSettings = { depth: sDep * blockSize, bevelEnabled: false };
+            const geo = new THREE.ExtrudeGeometry(shape2D, extrudeSettings);
+            geo.center();
+            
+            const mainMesh = new THREE.Mesh(geo, mat);
+            // Sesuaikan rotasi jika balok diputar (R)
+            if (isRotated) {
+                mainMesh.rotation.y = -Math.PI / 2;
+            } else {
+                mainMesh.rotation.y = 0;
+            }
+            group.add(mainMesh);
+
+            // Menambahkan Studs (Titik) HANYA di bagian yang datar
+            const studGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.07, 12);
+            // Loop hanya untuk lebar balok, panjangnya tetap di bagian belakang (datar)
+            for (let i = 0; i < (isRotated ? w : 1); i++) {
+                for (let j = 0; j < (isRotated ? 1 : d); j++) {
+                    const stud = new THREE.Mesh(studGeo, mat);
+                    // Posisi stud digeser ke arah belakang balok agar berada di area datar
+                    stud.position.set(
+                        (i + 0.5) * blockSize - (w * blockSize) / 2,
+                        blockHeight / 2,
+                        (j + 0.5) * blockSize - (d * blockSize) / 2
+                    );
+                    // Jika 1x2, geser stud ke ujung belakang
+                    if (!isRotated && d > 1) stud.position.z -= (blockSize/2);
+                    if (isRotated && w > 1) stud.position.x -= (blockSize/2);
+                    
+                    group.add(stud);
+                }
+            }
+
+            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w * blockSize, blockHeight, d * blockSize), new THREE.MeshBasicMaterial({visible:false}));
+            group.add(hitbox);
+
+        } else if (shape === 'wheel') {
+            const geo = new THREE.CylinderGeometry(blockSize*0.4, blockSize*0.4, w * blockSize, 32);
+            const mainMesh = new THREE.Mesh(geo, mat);
+            mainMesh.rotation.z = Math.PI / 2;
+            group.add(mainMesh);
+            const velg = new THREE.Mesh(new THREE.CylinderGeometry(blockSize*0.2, blockSize*0.2, (w * blockSize) + 0.05, 16), getMat(0xdddddd, 1));
+            velg.rotation.z = Math.PI / 2;
+            group.add(velg);
+            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w * blockSize, blockHeight, d * blockSize), new THREE.MeshBasicMaterial({visible:false}));
+            group.add(hitbox);
+
+        } else if (shape === 'cylinder') {
+            const geo = new THREE.CylinderGeometry(blockSize * 0.45, blockSize * 0.45, blockHeight, 32);
+            const mainMesh = new THREE.Mesh(geo, mat);
+            if (data.opacity === 1.0) { mainMesh.castShadow = true; mainMesh.receiveShadow = true; }
+            group.add(mainMesh);
+
+            const studGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.07, 16);
+            for (let i=0; i<w; i++) {
+                for (let j=0; j<d; j++) {
+                    const stud = new THREE.Mesh(studGeo, mat);
+                    stud.position.set(
+                        (i+0.5)*blockSize - (w*blockSize)/2,
+                        blockHeight/2,
+                        (j+0.5)*blockSize - (d*blockSize)/2
+                    );
+                    group.add(stud);
+                }
+            }
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(w*blockSize, blockHeight, d*blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else if (shape === 'pyramid') {
+            const geo = new THREE.CylinderGeometry(0, blockSize/Math.sqrt(2), blockHeight, 4);
+            const mainMesh = new THREE.Mesh(geo, mat);
+            mainMesh.rotation.y = Math.PI / 4; 
+            if (data.opacity === 1.0) { mainMesh.castShadow = true; mainMesh.receiveShadow = true; }
+            group.add(mainMesh);
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(w*blockSize, blockHeight, d*blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else if (shape === 'wall') {
+            const wallW = (w > d) ? w * blockSize : w * blockSize * 0.3;
+            const wallD = (w > d) ? d * blockSize * 0.3 : d * blockSize;
+            
+            const geo = new THREE.BoxGeometry(wallW, blockHeight, wallD);
+            const mainMesh = new THREE.Mesh(geo, mat);
+            if (data.opacity === 1.0) { mainMesh.castShadow = true; mainMesh.receiveShadow = true; }
+            group.add(mainMesh);
+
+            const studGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.07, 12);
+            for (let i=0; i<w; i++) {
+                for (let j=0; j<d; j++) {
+                    const stud = new THREE.Mesh(studGeo, mat);
+                    stud.position.set(
+                        (i+0.5)*blockSize - (w*blockSize)/2,
+                        blockHeight/2,
+                        (j+0.5)*blockSize - (d*blockSize)/2
+                    );
+                    group.add(stud);
+                }
+            }
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(w*blockSize, blockHeight, d*blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else if (shape === 'palm_tree') {
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, blockHeight * 1.5, 8), getMat(0x8d6e63));
+            trunk.position.y = blockHeight * 0.25; trunk.castShadow = true; group.add(trunk);
+            
+            const leaves = new THREE.Mesh(new THREE.ConeGeometry(0.6, 0.3, 6), mat);
+            leaves.position.y = blockHeight * 1.0; leaves.rotation.x = Math.PI; leaves.castShadow = true; group.add(leaves);
+            
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockHeight, blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else if (shape === 'mangrove_tree') {
+            const rootMat = getMat(0x4e342e);
+            for(let i=0; i<5; i++) {
+                const root = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, blockHeight, 6), rootMat);
+                root.position.set((Math.random()-0.5)*0.4, 0, (Math.random()-0.5)*0.4);
+                root.rotation.z = (Math.random()-0.5)*0.6;
+                root.rotation.x = (Math.random()-0.5)*0.6;
+                group.add(root);
+            }
+            const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45), mat);
+            leaves.position.y = blockHeight * 0.7; leaves.castShadow = true; group.add(leaves);
+            
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockHeight, blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else if (shape === 'rock_shape') {
+            const rockGeo = new THREE.DodecahedronGeometry(blockSize * 0.45, 0);
+            const rockMesh = new THREE.Mesh(rockGeo, mat);
+            rockMesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+            if (data.opacity === 1.0) { rockMesh.castShadow = true; rockMesh.receiveShadow = true; }
+            group.add(rockMesh);
+            
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(w*blockSize, blockHeight, d*blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else if (shape === 'door') {
+            const doorHeight = blockHeight * 3;
+            const doorW = (w > d) ? w * blockSize : w * blockSize * 0.15;
+            const doorD = (w > d) ? d * blockSize * 0.15 : d * blockSize;
+            
+            const doorGeo = new THREE.BoxGeometry(doorW, doorHeight, doorD);
+            const doorMesh = new THREE.Mesh(doorGeo, mat);
+            doorMesh.position.y = (doorHeight - blockHeight) / 2;
+            if (data.opacity === 1.0) { doorMesh.castShadow = true; doorMesh.receiveShadow = true; }
+            group.add(doorMesh);
+            
+            const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), getMat(0xffd700));
+            const knobY = doorMesh.position.y - (doorHeight * 0.1);
+            if (w > d) { 
+                knob.position.set((w*blockSize/2) - 0.2, knobY, doorD/2 + 0.02); 
+            } else { 
+                knob.position.set(doorW/2 + 0.02, knobY, (d*blockSize/2) - 0.2); 
+            }
+            group.add(knob);
+            
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(w*blockSize, blockHeight, d*blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            group.add(hb);
+
+        } else {
+            const mainMesh = new THREE.Mesh(new THREE.BoxGeometry(w*blockSize, blockHeight, d*blockSize), mat);
+            if (data.opacity === 1.0) { mainMesh.castShadow = true; mainMesh.receiveShadow = true; }
+            group.add(mainMesh);
+
+            if (!['ripple','flicker','glow_float'].includes(data.effect)) {
+                const studGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.07, 12);
+                const studMat = getMat(data.color, data.opacity);
+                for (let i=0; i<w; i++) for (let j=0; j<d; j++) {
+                    const stud = new THREE.Mesh(studGeo, studMat);
+                    stud.position.set(
+                        (i+0.5)*blockSize - (w*blockSize)/2,
+                        blockHeight/2,
+                        (j+0.5)*blockSize - (d*blockSize)/2
+                    );
+                    if (data.opacity === 1.0) stud.castShadow = true;
+                    group.add(stud);
+                }
+            }
+        }
+        return group;
+    }
+
+    // Fungsi pintar yang mencari TopY sesungguhnya dari blok di bawah posisi ini
+    function getAbsoluteY(gx, gy, gz) {
+        if (gy > 0) {
+            const blockBelow = gridState[`${gx},${gy-1},${gz}`];
+            if (blockBelow && blockBelow.topY !== undefined) {
+                return blockBelow.topY;
+            }
+        }
+        return gy * blockHeight; // Jika tumpukan kosong, fallback standar.
+    }
+
+    function placeBrick(gx, gy, gz, matKey, w=1, d=1, isStatic=false, shapeOverride=null, targetVisualY=null) {
+        const data  = BLOCK_REGISTRY[matKey] || BLOCK_REGISTRY.ground;
+        const shape = shapeOverride || data.shapeDefinition || 'box';
+
+        // Hitung tinggi asli
+        let actualH = blockHeight;
+        if (shape === 'plate' || shape === 'tile') actualH = blockHeight / 3;
+        else if (shape === 'door') actualH = blockHeight * 3;
+
+        // VisualY ditetapkan oleh fungsi onPointerMove, kalau belum ada, hitung dengan getAbsoluteY (cocok untuk map loading)
+        let visualY = targetVisualY;
+        if (visualY === null) {
+            visualY = getAbsoluteY(gx, gy, gz) + blockHeight / 2;
+        }
+
+        const brick  = createBrickMesh(matKey, w, d, shape);
+        const visualX = (gx + (gx+w-1)) / 2 * blockSize;
+        const visualZ = (gz + (gz+d-1)) / 2 * blockSize;
+        
+        brick.position.set(visualX, visualY, visualZ);
+        brick.userData = { gridX: gx, gridY: gy, gridZ: gz, w, d, matKey, effect: data.effect, isStatic, actualH, shape, visualY };
+
+        let hitboxObj = brick.children.find(c => c.isMesh && c.material && c.material.visible === false);
+        if (!hitboxObj) hitboxObj = brick.children[0];
+        hitboxObj.userData = { ...brick.userData, parentRef: brick };
+
+        // Kalkulasi bagian atas dan bawah dengan sangat presisi
+        const topY = visualY - blockHeight/2 + actualH;
+        const occupiedKeys = [];
+        const gyCount = (shape === 'door') ? 3 : 1;
+
+        for (let i=0; i<w; i++) {
+            for (let j=0; j<d; j++) {
+                for (let k=0; k<gyCount; k++) {
+                    const key = `${gx+i},${gy+k},${gz+j}`;
+                    gridState[key] = { gridX: gx+i, gridY: gy+k, gridZ: gz+j, matKey, shape, isWalkable: data.isWalkable, topY };
+                    occupiedKeys.push(key);
+                }
+            }
+        }
+
+        if (data.effect === 'glow_float' || data.effect === 'glow_static') {
+            const light = new THREE.PointLight(data.color, 1.8, 5);
+            light.position.set(0, 1.2, 0); brick.add(light);
+            brick.children.forEach(c => {
+                if (c.isMesh && c.material && c.material.visible !== false) {
+                    c.material = c.material.clone();
+                    c.material.emissive.setHex(data.color);
+                    c.material.emissiveIntensity = 0.55;
+                }
+            });
+            if (matKey === 'goal' || matKey === 'checkpoint') {
+                targetGridKeys.push(...occupiedKeys);
+            }
+        }
+
+        if (matKey !== 'goal' && matKey !== 'checkpoint') {
+            interactables.push(hitboxObj);
+        }
+
+        if (data.effect === 'flicker') {
+            const fireLight = new THREE.PointLight(0xff7043, 1.2, 3);
+            fireLight.position.set(0, 0.5, 0); brick.add(fireLight);
+        }
+
+        scene.add(brick);
+        physicalBricks.push(brick);
+
+        if (!isStatic) {
+            spawnParticles(visualX, visualY, visualZ, data.color, 5);
+            brick.scale.set(0.7, 0.7, 0.7);
+            new TWEEN.Tween(brick.scale).to({ x:1, y:1, z:1 }, 220).easing(TWEEN.Easing.Back.Out).start();
+            placedBlocksCount++;
+            updateBlockCounter();
+        }
+        return brick;
+    }
+
+    function removeBrick(brickGroup) {
+        if (!brickGroup) return;
+        const ud = brickGroup.userData;
+        if (ud.isStatic) { showMessage(i18n[currentLang].msgStatic, false); return; }
+
+        if (currentResources && currentResources.hasOwnProperty(ud.matKey)) {
+            currentResources[ud.matKey]++;
+            updateResourceDisplay();
+        }
+        placedBlocksCount = Math.max(0, placedBlocksCount - 1);
+        updateBlockCounter();
+
+        const gyCount = (ud.shape === 'door') ? 3 : 1;
+        for (let i=0; i<ud.w; i++) {
+            for (let j=0; j<ud.d; j++) {
+                for (let k=0; k<gyCount; k++) {
+                    delete gridState[`${ud.gridX+i},${ud.gridY+k},${ud.gridZ+j}`];
+                }
+            }
+        }
+
+        const hb = brickGroup.children.find(c => c.userData && c.userData.gridX !== undefined);
+        const idx = interactables.indexOf(hb);
+        if (idx > -1) interactables.splice(idx, 1);
+        scene.remove(brickGroup);
+
+        const data = BLOCK_REGISTRY[ud.matKey] || BLOCK_REGISTRY.ground;
+        spawnParticles(brickGroup.position.x, brickGroup.position.y, brickGroup.position.z, data.color, 4);
+    }
+
+    function spawnParticles(x, y, z, colorHex, count=10, isConfetti=false) {
+        const geo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+        for (let i=0; i<count; i++) {
+            const c = isConfetti ? [0xf1c40f, 0xef4444, 0x3d8ef8, 0x22c55e, 0xa78bfa][Math.floor(Math.random()*5)] : colorHex;
+            const mat = new THREE.MeshBasicMaterial({ color: c, transparent: true });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x+(Math.random()-0.5)*0.8, y, z+(Math.random()-0.5)*0.8);
+            scene.add(mesh);
+            const sp = isConfetti ? 4 : 1.5, ht = isConfetti ? 5 : 1.2;
+            new TWEEN.Tween(mesh.position).to({
+                x: mesh.position.x+(Math.random()-0.5)*sp,
+                y: Math.random()*ht,
+                z: mesh.position.z+(Math.random()-0.5)*sp
+            }, isConfetti ? 1600 : 520).easing(TWEEN.Easing.Quadratic.Out).onComplete(()=>scene.remove(mesh)).start();
+            new TWEEN.Tween(mat).to({ opacity:0 }, isConfetti ? 1600 : 520).start();
+        }
+    }
+
+    let charGroup = null;
+    let charGrid  = { x:0, y:0, z:0 };
+
+    function initPlayer() {
+        if (charGroup) scene.remove(charGroup);
+        charGroup = createBrickMesh('player', 1, 1);
+        scene.add(charGroup);
+        charGroup.visible = false;
+    }
+
+    function setCharacterPos(x, y, z) {
+        charGrid = { x, y, z };
+        // Humanoid langsung mendarat di atas TopY block bawahnya (tanpa harus ditambah tinggi ekstra)
+        charGroup.position.set(x * blockSize, getAbsoluteY(x, y, z), z * blockSize);
+        charGroup.visible = true;
+        charGroup.rotation.y = 0;
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const mouse     = new THREE.Vector2();
+
+    const basePlaneGeo = new THREE.PlaneGeometry(80,80); basePlaneGeo.rotateX(-Math.PI/2);
+    const basePlane    = new THREE.Mesh(basePlaneGeo, new THREE.MeshBasicMaterial({ visible: false }));
+    scene.add(basePlane);
+
+    let ghostBrick   = new THREE.Group(); scene.add(ghostBrick);
+    let validGridPos = null, hoveredBrick = null;
+
+    function updateGhostBrick() {
+        scene.remove(ghostBrick);
+        ghostBrick = createBrickMesh(currentMaterialKey, currentShapeW, currentShapeD, currentShapeType);
+        ghostBrick.traverse(c => {
+            if (c.isMesh && c.material) {
+                c.material = c.material.clone();
+                c.material.transparent = true;
+                c.material.opacity = 0.55;
+                c.material.depthWrite = false;
+            }
+        });
+        scene.add(ghostBrick);
+        validGridPos = null; ghostBrick.visible = false;
+    }
+
+    function onPointerMove(e) {
+        if (gameMode === 'menu' || isWalking) return;
+        mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(interactables);
+
+        if (hoveredBrick && hoveredBrick.material && hoveredBrick.material.emissive) {
+            hoveredBrick.material.emissive.setHex(0x000000); hoveredBrick = null;
+        }
+
+        if (hits.length > 0) {
+            const hit = hits[0];
+            if (activeTool === 'delete') {
+                ghostBrick.visible = false;
+                if (hit.object !== basePlane && !hit.object.userData.isStatic) {
+                    hoveredBrick = hit.object;
+                    if (hoveredBrick.material) hoveredBrick.material.emissive.setHex(0xff2222);
+                }
+                return;
+            }
+
+            let gx, gy, gz, targetVisualY;
+            if (hit.object === basePlane) {
+                gx = Math.round(hit.point.x / blockSize - (currentShapeW-1)/2);
+                gz = Math.round(hit.point.z / blockSize - (currentShapeD-1)/2);
+                gy = 0;
+                targetVisualY = blockHeight / 2;
+            } else {
+                const hitUD = hit.object.userData;
+                const parentPos = hitUD.parentRef.position;
+                
+                // Kalkulasi batas atas & bawah asli dari blok yang sedang diklik
+                const hitBaseY = parentPos.y - blockHeight / 2;
+                const hitTopY = hitBaseY + (hitUD.actualH || blockHeight);
+
+                const p = hit.point.clone().add(hit.face.normal.clone().multiplyScalar(0.05));
+                gx = Math.round(p.x / blockSize - (currentShapeW-1)/2);
+                gz = Math.round(p.z / blockSize - (currentShapeD-1)/2);
+                
+                const n = hit.face.normal;
+                if (n.y > 0.5) { // Di atas blok
+                    let hCells = (hitUD.shape === 'door') ? 3 : 1;
+                    gy = hitUD.gridY + hCells;
+                    targetVisualY = hitTopY + blockHeight / 2;
+                } else if (n.y < -0.5) { // Di bawah blok
+                    let myCells = (currentShapeType === 'door') ? 3 : 1;
+                    gy = hitUD.gridY - myCells;
+                    let newActualH = (currentShapeType === 'door') ? blockHeight * 3 : (currentShapeType === 'plate' || currentShapeType === 'tile' ? blockHeight/3 : blockHeight);
+                    targetVisualY = (hitBaseY - newActualH) + blockHeight / 2;
+                } else { // Menempel di samping blok
+                    gy = hitUD.gridY;
+                    targetVisualY = parentPos.y; 
+                }
+            }
+
+            let isSpaceFree = true, hasSupport = (gy === 0);
+            const newGyCount = (currentShapeType === 'door') ? 3 : 1;
+            
+            for (let i=0; i<currentShapeW; i++) {
+                for (let j=0; j<currentShapeD; j++) {
+                    const cx = gx+i, cz = gz+j;
+                    
+                    for(let k=0; k<newGyCount; k++) {
+                        if (gridState[`${cx},${gy+k},${cz}`]) isSpaceFree = false;
+                    }
+                    
+                    if (gy > 0 && gridState[`${cx},${gy-1},${cz}`]) hasSupport = true;
+                    if (charGroup.visible && cx===charGrid.x && gy===charGrid.y && cz===charGrid.z) isSpaceFree = false;
+                }
+            }
+
+            if (isSpaceFree && hasSupport) {
+                ghostBrick.position.set(
+                    (gx + (gx+currentShapeW-1)) / 2 * blockSize,
+                    targetVisualY,
+                    (gz + (gz+currentShapeD-1)) / 2 * blockSize
+                );
+                ghostBrick.visible = true; 
+                validGridPos = { x:gx, y:gy, z:gz, visualY: targetVisualY };
+            } else {
+                ghostBrick.visible = false; validGridPos = null;
+            }
+        } else {
+            ghostBrick.visible = false; validGridPos = null;
+        }
+    }
+
+    let pointerDownPos = null;
+    window.addEventListener('pointerdown', e => {
+        if (gameMode==='menu'||isWalking||e.target.closest('.panel')||e.target.closest('.overlay-screen')||e.target.closest('#level-clear')||e.target.closest('#level-fail')||e.target.closest('#top-bar')) return;
+        pointerDownPos = { x: e.clientX, y: e.clientY };
+    });
+    
+    window.addEventListener('pointerup', e => {
+        if (!pointerDownPos) return;
+        const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+        pointerDownPos = null;
+        if (dist >= 10) return;
+
+        if (activeTool === 'build' && validGridPos && ghostBrick.visible) {
+            if (currentResources) {
+                const matKey = currentShapeType === 'tree' ? 'mangrove' : currentMaterialKey;
+                const resKey = matKey;
+                if (currentResources[resKey] !== undefined && currentResources[resKey] <= 0) {
+                    showMessage(i18n[currentLang].msgNoResource); return;
+                }
+                if (currentResources[resKey] !== undefined) currentResources[resKey]--;
+                updateResourceDisplay();
+            }
+            const mk = currentShapeType === 'tree' ? 'mangrove' : currentMaterialKey;
+            // Kita pass juga visualY target dari kalkulasi mouse, sehingga hasilnya tidak melenceng lagi
+            placeBrick(validGridPos.x, validGridPos.y, validGridPos.z, mk, currentShapeW, currentShapeD, false, currentShapeType, validGridPos.visualY);
+            onPointerMove(e);
+        } else if (activeTool === 'delete' && hoveredBrick) {
+            removeBrick(hoveredBrick.userData.parentRef);
+            hoveredBrick = null; onPointerMove(e);
+        }
+    });
+    
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('keydown', e => { if ((e.key==='r'||e.key==='R') && gameMode!=='menu') rotateBlock(); });
+
+
+    function setLang(lang) {
+        currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`)?.classList.add('active');
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[lang][key]) el.innerHTML = i18n[lang][key];
+        });
+        populateMaterialSelect(lang);
+        renderLevelList();
+
+        if (gameMode === 'sandbox') {
+            document.getElementById('ui-title').textContent = i18n[lang].sandboxTitle;
+            document.getElementById('ui-desc').textContent  = i18n[lang].sandboxDesc;
+        } else if (gameMode === 'mission') {
+            const m = MISSION_REGISTRY[currentMissionIdx];
+            if (m) {
+                document.getElementById('ui-title').textContent = m.title[lang];
+                document.getElementById('ui-desc').textContent  = m.desc[lang];
+            }
+        }
+        setMaterial(currentMaterialKey);
+    }
+
+    function populateMaterialSelect(lang) {
+        const sel  = document.getElementById('material-select');
+        const prev = sel.value;
+        sel.innerHTML = '';
+        Object.keys(BLOCK_REGISTRY).forEach(k => {
+            const b = BLOCK_REGISTRY[k];
+            if (!b.playerBuildable) return;
+            if (gameMode === 'mission' && currentResources !== null && !currentResources.hasOwnProperty(k) && k !== 'mangrove') return;
+            const opt = document.createElement('option');
+            opt.value = k;
+            const count = (currentResources && currentResources[k] !== undefined) ? ` (${currentResources[k]})` : '';
+            opt.textContent = b.name[lang] + count;
+            sel.appendChild(opt);
+        });
+        sel.value = sel.querySelector(`option[value="${prev}"]`) ? prev : sel.options[0]?.value || 'ground';
+        currentMaterialKey = sel.value;
+    }
+
+    function setTool(tool, el) {
+        activeTool = tool;
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        ghostBrick.visible = false;
+        document.getElementById('build-tools').style.opacity = (tool === 'delete') ? '0.55' : '1';
+    }
+
+    function setMaterial(matKey) {
+        currentMaterialKey = matKey;
+        const data = BLOCK_REGISTRY[matKey];
+        document.getElementById('edu-text').innerHTML = data ? data.edu[currentLang] : '';
+        updateGhostBrick();
+    }
+
+    function setShape(w, d, shape, el) {
+        currentShapeW = w; currentShapeD = d; currentShapeType = shape;
+        if (shape === 'tree') {
+            const man = BLOCK_REGISTRY.mangrove;
+            document.getElementById('edu-text').innerHTML = man.edu[currentLang];
+        } else {
+            setMaterial(document.getElementById('material-select').value);
+        }
+        updateGhostBrick();
+        document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function rotateBlock() {
+        if (currentShapeType === 'tree' || currentShapeW === currentShapeD) return;
+        let tempW = currentShapeW;
+        currentShapeW = currentShapeD;
+        currentShapeD = tempW;
+        updateGhostBrick();
+    }
+
+    function showMessage(txt, isSuccess = false) {
+        const m = document.getElementById('message-box');
+        m.textContent = txt;
+        m.style.background = isSuccess ? '#22c55e' : '#ef4444';
+        m.classList.add('show');
+        clearTimeout(m._t);
+        m._t = setTimeout(() => m.classList.remove('show'), 3500);
+    }
+
+    function updateBlockCounter() {
+        const el = document.getElementById('block-counter');
+        document.getElementById('block-count-num').textContent = placedBlocksCount;
+        el.classList.toggle('show', gameMode !== 'menu');
+    }
+
+    function initResources(resources) {
+        currentResources  = resources ? { ...resources } : null;
+        placedBlocksCount = 0;
+        updateResourceDisplay();
+        updateBlockCounter();
+    }
+
+    function updateResourceDisplay() {
+        const container = document.getElementById('resource-display');
+        container.innerHTML = '';
+        if (!currentResources) {
+            const chip = document.createElement('div');
+            chip.className = 'res-chip';
+            chip.innerHTML = `<span>∞</span><span>${i18n[currentLang].unlimited}</span>`;
+            container.appendChild(chip);
+            return;
+        }
+        populateMaterialSelect(currentLang);
+        Object.entries(currentResources).forEach(([key, count]) => {
+            const b = BLOCK_REGISTRY[key];
+            if (!b) return;
+            const chip = document.createElement('div');
+            chip.className = `res-chip ${count === 0 ? 'empty' : ''} ${key === currentMaterialKey ? 'active-res' : ''}`;
+            chip.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#${b.color.toString(16).padStart(6,'0')};"></span><span>${b.name[currentLang].split(' ')[0]}</span><span class="res-count">${count}</span>`;
+            chip.onclick = () => {
+                if (count > 0) {
+                    document.getElementById('material-select').value = key;
+                    setMaterial(key);
+                    updateResourceDisplay();
+                }
+            };
+            container.appendChild(chip);
+        });
+    }
+
+    function startTimer(seconds) {
+        missionTimeLimit  = seconds;
+        timerSecondsLeft  = seconds;
+        const display     = document.getElementById('timer-display');
+        const timerText   = document.getElementById('timer-text');
+        display.classList.add('show');
+        display.classList.remove('urgent');
+        timerText.textContent = timerSecondsLeft;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timerSecondsLeft--;
+            timerText.textContent = timerSecondsLeft;
+            if (timerSecondsLeft <= 15) display.classList.add('urgent');
+            if (timerSecondsLeft <= 0)  { clearInterval(timerInterval); triggerMissionFail(); }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        document.getElementById('timer-display').classList.remove('show', 'urgent');
+    }
+
+    function triggerMissionFail() {
+        if (isWalking) return;
+        stopTimer();
+        document.getElementById('level-fail').classList.add('show');
+        document.getElementById('ui-layer').classList.add('hidden');
+        spawnParticles(charGroup.position.x, charGroup.position.y, charGroup.position.z, 0xef4444, 20);
+    }
+
+    function renderLevelList() {
+        const list = document.getElementById('level-list');
+        list.innerHTML = '';
+        const topicBadgeClass = { flood:'flood', volcano:'volcano', earthquake:'quake', tsunami:'tsunami', coastal:'coastal', landslide:'landslide', multihazard:'multihazard' };
+        const diffBadgeClass  = { easy:'easy', medium:'medium', hard:'hard' };
+
+        MISSION_REGISTRY.forEach((m, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'menu-btn level-card';
+            const diff      = i18n[currentLang][`difficulty_${m.difficulty}`];
+            const topic     = i18n[currentLang][`drrTopic_${m.drrTopic}`];
+            const hasTimer  = m.timeLimit ? `<span class="badge badge-timer">⏱ ${m.timeLimit}s</span>` : '';
+            btn.innerHTML = `
+                <span class="level-card-title">${m.icon} ${m.title[currentLang]}</span>
+                <span class="level-card-desc">${m.desc[currentLang]}</span>
+                <span class="level-card-badges">
+                    <span class="badge badge-${diffBadgeClass[m.difficulty]}">${diff}</span>
+                    <span class="badge badge-${topicBadgeClass[m.drrTopic] || 'flood'}">${topic}</span>
+                    ${hasTimer}
+                    ${!m.resources ? `<span class="badge badge-unlim">${i18n[currentLang].unlimited}</span>` : ''}
+                </span>`;
+            btn.onclick = () => startGame('mission', idx);
+            list.appendChild(btn);
+        });
+    }
+
+    function showLevelSelect() {
+        document.getElementById('landing-page').classList.add('hidden');
+        document.getElementById('level-select-page').classList.remove('hidden');
+        document.getElementById('level-clear').classList.remove('show');
+        document.getElementById('level-fail').classList.remove('show');
+        renderLevelList();
+    }
+
+    function showMainMenu() {
+        stopTimer(); gameMode = 'menu';
+        document.getElementById('landing-page').classList.remove('hidden');
+        document.getElementById('level-select-page').classList.add('hidden');
+        document.getElementById('ui-layer').classList.add('hidden');
+        document.getElementById('game-container').style.filter = 'blur(6px)';
+        document.getElementById('level-clear').classList.remove('show');
+        document.getElementById('level-fail').classList.remove('show');
+        document.getElementById('block-counter').classList.remove('show');
+        clearLevel();
+    }
+
+    function clearLevel() {
+        physicalBricks.forEach(b => scene.remove(b));
+        physicalBricks = []; gridState = {}; targetGridKeys = [];
+        interactables.length = 0; interactables.push(basePlane);
+        if (charGroup) charGroup.visible = false;
+        ghostBrick.visible = false;
+        stopTimer();
+    }
+
+    function startGame(mode, missionIdx = 0) {
+        gameMode = mode;
+        document.getElementById('landing-page').classList.add('hidden');
+        document.getElementById('level-select-page').classList.add('hidden');
+        document.getElementById('level-clear').classList.remove('show');
+        document.getElementById('level-fail').classList.remove('show');
+        document.getElementById('ui-layer').classList.remove('hidden');
+        document.getElementById('game-container').style.filter = 'none';
+
+        clearLevel(); initPlayer(); setLang(currentLang);
+
+        const btnWalk = document.getElementById('btn-walk');
+        if (mode === 'mission') {
+            loadMission(missionIdx);
+            btnWalk.style.display = 'block';
+        } else {
+            btnWalk.style.display = 'none';
+            initResources(null);
+            document.getElementById('panel-icon').textContent = '🏖️';
+            document.getElementById('ui-title').textContent = i18n[currentLang].sandboxTitle;
+            document.getElementById('ui-desc').textContent  = i18n[currentLang].sandboxDesc;
+            placeBrick(-4, 0, -4, 'ground', 10, 10, true, 'box');
+        }
+        updateGhostBrick();
+        currentShapeW = 1; currentShapeD = 1; currentShapeType = 'box';
+        document.querySelectorAll('.shape-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+        document.querySelectorAll('.tool-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+        activeTool = 'build';
+        document.getElementById('build-tools').style.opacity = '1';
+    }
+
+    function loadMission(idx) {
+        clearLevel(); currentMissionIdx = idx;
+        const m = MISSION_REGISTRY[idx];
+        document.getElementById('panel-icon').textContent = m.icon;
+        document.getElementById('ui-title').textContent   = m.title[currentLang];
+        document.getElementById('ui-desc').textContent    = m.desc[currentLang];
+
+        m.grid.forEach(b => placeBrick(b.x, b.y, b.z, b.mat, b.w||1, b.d||1, b.isStatic, b.shape||'box'));
+
+        if (m.playerStart) setCharacterPos(m.playerStart.x, m.playerStart.y, m.playerStart.z);
+        if (m.cameraTarget) {
+            controls.target.set(m.cameraTarget.x, m.cameraTarget.y, m.cameraTarget.z);
+            camera.position.set(m.cameraTarget.x+20, m.cameraTarget.y+25, m.cameraTarget.z+20);
+        }
+
+        initResources(m.resources);
+        if (m.timeLimit) startTimer(m.timeLimit);
+        updateBlockCounter();
+
+        if (m.drrLesson) {
+            document.getElementById('edu-text').innerHTML = `<strong>📖 ${m.title[currentLang]}:</strong> ${m.drrLesson[currentLang]}`;
+        }
+    }
+
+    function nextMission() {
+        if (currentMissionIdx + 1 < MISSION_REGISTRY.length) {
+            startGame('mission', currentMissionIdx + 1);
+        } else {
+            showMessage(i18n[currentLang].msgSelesai, true);
+            showLevelSelect();
+        }
+    }
+
+    function replayMission() {
+        document.getElementById('level-clear').classList.remove('show');
+        document.getElementById('level-fail').classList.remove('show');
+        startGame('mission', currentMissionIdx);
+    }
+
+    function showLevelClear() {
+        stopTimer();
+        const m = MISSION_REGISTRY[currentMissionIdx];
+        const par = m ? (m.parBlocks || 6) : 6;
+
+        let stars = 1;
+        if (placedBlocksCount <= par)        stars = 3;
+        else if (placedBlocksCount <= par * 1.7) stars = 2;
+
+        ['star1','star2','star3'].forEach((id, i) => {
+            const el = document.getElementById(id);
+            el.classList.remove('earned');
+            if (i < stars) setTimeout(() => el.classList.add('earned'), 300 + i*200);
+        });
+
+        const label = i18n[currentLang][`stars${stars}`];
+        document.getElementById('blocks-used-label').textContent = `${placedBlocksCount} ${i18n[currentLang].used} — ${label}`;
+
+        setTimeout(() => {
+            document.getElementById('level-clear').classList.add('show');
+            document.getElementById('ui-layer').classList.add('hidden');
+        }, 1400);
+    }
+
+    function startWalking() {
+        if (isWalking) return;
+        const btn = document.getElementById('btn-walk');
+        btn.textContent = '...';
+
+        const queue   = [{ x: charGrid.x, y: charGrid.y, z: charGrid.z, path: [] }];
+        const visited = new Set([`${charGrid.x},${charGrid.y},${charGrid.z}`]);
+        let finalPath  = null;
+
+        while (queue.length > 0) {
+            const cur    = queue.shift();
+            const curKey = `${cur.x},${cur.y-1},${cur.z}`;
+            if (targetGridKeys.includes(curKey)) { finalPath = cur.path; break; }
+
+            for (const [dx, dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+                const nx = cur.x+dx, nz = cur.z+dz;
+                for (const dy of [0, 1, -1]) {
+                    const ny = cur.y+dy;
+                    const footBlock = gridState[`${nx},${ny-1},${nz}`];
+                    if (!footBlock || !footBlock.isWalkable) continue;
+                    if (gridState[`${nx},${ny},${nz}`]) continue;
+                    if (gridState[`${nx},${ny+1},${nz}`]) continue;
+                    if (dy === 1 && gridState[`${cur.x},${cur.y+1},${cur.z}`]) continue;
+                    const sk = `${nx},${ny},${nz}`;
+                    if (!visited.has(sk)) {
+                        visited.add(sk);
+                        queue.push({ x:nx, y:ny, z:nz, path:[...cur.path, {x:nx, y:ny, z:nz}] });
+                    }
+                }
+            }
+        }
+
+        if (finalPath && finalPath.length > 0) {
+            isWalking = true; ghostBrick.visible = false;
+            animatePath(finalPath, 0);
+        } else {
+            btn.textContent = i18n[currentLang].run;
+            showMessage(i18n[currentLang].msgBuntu);
+            new TWEEN.Tween(charGroup.position).to({ y: charGroup.position.y+0.3 }, 100).yoyo(true).repeat(5).start();
+            new TWEEN.Tween(charGroup.rotation).to({ y: 0.5 }, 120).yoyo(true).repeat(3).onComplete(()=>charGroup.rotation.y=0).start();
+        }
+    }
+
+    function animatePath(path, stepIdx) {
+        if (stepIdx >= path.length) {
+            isWalking = false;
+            document.getElementById('btn-walk').textContent = i18n[currentLang].run;
+            new TWEEN.Tween(charGroup.position).to({ y: charGroup.position.y+1.0 }, 220).yoyo(true).repeat(4).start();
+            new TWEEN.Tween(charGroup.rotation).to({ y: Math.PI*4 }, 1000).start();
+            spawnParticles(charGroup.position.x, charGroup.position.y, charGroup.position.z, 0xf1c40f, 35, true);
+            showLevelClear();
+            return;
+        }
+
+        const next = path[stepIdx];
+        const tX   = next.x * blockSize;
+        const tZ   = next.z * blockSize;
+        const tY = getAbsoluteY(next.x, next.y, next.z);
+
+        spawnParticles(charGroup.position.x, charGroup.position.y, charGroup.position.z, 0xffffff, 2);
+
+        const dx = next.x - charGrid.x, dz = next.z - charGrid.z;
+        if (dx !== 0 || dz !== 0) charGroup.rotation.y = Math.atan2(dx, dz);
+
+        new TWEEN.Tween(charGroup.position).to({ x:tX, z:tZ }, 280).easing(TWEEN.Easing.Quadratic.InOut).start();
+        const peakY = Math.max(charGroup.position.y, tY) + 0.45;
+        new TWEEN.Tween(charGroup.position).to({ y: peakY }, 140).easing(TWEEN.Easing.Quadratic.Out)
+            .onComplete(() => {
+                new TWEEN.Tween(charGroup.position).to({ y: tY }, 140).easing(TWEEN.Easing.Quadratic.In)
+                    .onComplete(() => { charGrid = next; animatePath(path, stepIdx+1); }).start();
+            }).start();
+    }
+
+    window.addEventListener('resize', () => {
+        const asp = window.innerWidth / window.innerHeight;
+        camera.left=-d*asp; camera.right=d*asp; camera.top=d; camera.bottom=-d;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    const clock = new THREE.Clock();
+    function animate() {
+        requestAnimationFrame(animate);
+        TWEEN.update(); controls.update();
+        const t = clock.getElapsedTime();
+
+        physicalBricks.forEach(b => {
+            const eff  = b.userData.effect;
+            const baseY = b.userData.visualY; // Ambil base Y presisi dari data fisik balok
+
+            if (eff === 'glow_float') {
+                b.position.y = baseY + Math.sin(t * 2.8 + b.position.x) * 0.12;
+                b.rotation.y = t * 0.5;
+            } else if (eff === 'ripple') {
+                const wave = 1 + Math.sin(t * 4.5 + b.position.x * 0.8 + b.position.z * 0.8) * 0.09;
+                b.scale.y   = wave;
+                b.position.y = baseY + (wave - 1) * blockHeight / 2;
+            } else if (eff === 'flicker') {
+                const fl = 0.9 + Math.random() * 0.2;
+                b.scale.set(fl, fl, fl);
+                b.position.y = baseY + (fl - 1) * blockHeight / 2;
+                const light = b.children.find(c => c.isLight);
+                if (light) light.intensity = 0.8 + Math.random() * 1.2;
+            }
+        });
+
+        if (charGroup && charGroup.visible && !isWalking) {
+            charGroup.children[0] && (charGroup.children[0].position.y = 0.28 + Math.sin(t * 3) * 0.02);
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    initPlayer();
+    setLang('id');
+    animate();
+
+// =========================================================================
+
+    </script>
+</body>
+</html>
