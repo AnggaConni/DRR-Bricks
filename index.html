@@ -720,52 +720,112 @@
             ]
         },
         // ── LEVEL 11 ──────────────────────────────────────────────────────────
-        {
-            id: "level_11",
-            title:      { id: "Level 11: Mega Bendungan Lembah", en: "Level 11: Valley Mega Dam" },
-            desc:       { id: "Misi Epik! Bangun bendungan raksasa melintasi sungai lebar dan buat jalur naik ke puncak tebing. Tidak ada batas waktu, bebas berkreasi!", en: "Epic Mission! Build a massive dam across the wide river and a path up the high cliff. No time limit, be creative!" },
-            drrTopic:   "flood", difficulty: "hard", icon: "🛡️",
-            drrLesson:  { id: "Infrastruktur DRR skala besar seperti bendungan raksasa membutuhkan perencanaan struktur yang kuat dan jalur evakuasi berlapis.", en: "Large-scale DRR infrastructure like mega dams require strong structural planning and multi-layered evacuation routes." },
-            
-            playerStart: { x: 0, y: 2, z: 0 },
-            cameraTarget: { x: 6, y: 2, z: 0 }, // Kamera digeser ke tengah sungai
-            
-            // Stok balok dibuat sangat banyak agar bisa membangun struktur rumit
-            resources: { dam_block: 30, rock: 25, concrete: 25, wood: 40, water_gate: 5, brick: 30, rope_bridge: 15 },
-            parBlocks: 35, // Batas untuk dapat 3 bintang dinaikkan
-            timeLimit: null, // Tanpa Timer! Pemain bisa santai membangun
-            
-            grid: [
-                // 1. Dataran Kiri (Start Area) - Dibuat agak tinggi (2 layer)
-                { x: -2, y: 0, z: -2, mat: 'ground', w: 4, d: 5, isStatic: true },
-                { x: -2, y: 1, z: -2, mat: 'ground', w: 4, d: 5, isStatic: true },
+{
+    id: "level_11",
+    title:      { id: "Level 11: Mega Bendungan Lembah", en: "Level 11: Valley Mega Dam" },
+    desc:       { id: "Misi Epik! Bendungan raksasa ini bocor! Tutup celah di dinding bendungan sebelum banjir melanda lembah di bawah, lalu bangun jalur ke zona aman di puncak!", en: "Epic Mission! The mega dam is cracking! Seal the gaps in the dam wall before the valley below floods, then build a path to the safe zone at the top!" },
+    drrTopic:   "flood", difficulty: "hard", icon: "🛡️",
+    drrLesson:  { id: "Bendungan raksasa menahan jutaan ton air. Retakan kecil bisa menjadi bencana besar — perawatan dan inspeksi rutin adalah kunci keselamatan DRR.", en: "Mega dams hold millions of tons of water. A small crack can become a catastrophe — regular maintenance and inspection are the keys to DRR safety." },
 
-                // 2. Area Sungai/Banjir (Tengah) - Sangat lebar
-                { x:  2, y: 0, z: -2, mat: 'water', w: 8, d: 5, isStatic: true },
-                { x:  2, y: 1, z: -2, mat: 'water', w: 8, d: 5, isStatic: true },
+    playerStart:  { x: 4, y: 1, z: 0 },
+    cameraTarget: { x: 0, y: 3, z: 0 },
 
-                // 3. Pijakan di tengah air (Sisa reruntuhan/pulau kecil untuk tumpuan jembatan)
-                { x:  4, y: 0, z: -1, mat: 'rock', w: 2, d: 2, isStatic: true },
-                { x:  4, y: 1, z: -1, mat: 'rock', w: 2, d: 2, isStatic: true },
-                { x:  7, y: 0, z:  0, mat: 'rock', w: 2, d: 2, isStatic: true },
-                { x:  7, y: 1, z:  0, mat: 'rock', w: 2, d: 2, isStatic: true },
+    resources: { dam_block: 30, concrete: 25, rock: 20, wood: 30, water_gate: 5, brick: 20, rope_bridge: 10 },
+    parBlocks:  35,
+    timeLimit:  null, // No timer — build freely!
 
-                // 4. Tebing Kanan (Safe Zone) - Berundak dan sangat tinggi
-                // Base tebing
-                { x: 10, y: 0, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
-                { x: 10, y: 1, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
-                { x: 10, y: 2, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
-                // Undakan kedua
-                { x: 11, y: 3, z: -2, mat: 'rock', w: 3, d: 5, isStatic: true },
-                { x: 11, y: 4, z: -2, mat: 'rock', w: 3, d: 5, isStatic: true },
-                // Puncak tebing
-                { x: 12, y: 5, z: -2, mat: 'rock', w: 2, d: 5, isStatic: true },
-                { x: 12, y: 6, z: -2, mat: 'rock', w: 2, d: 5, isStatic: true },
+    grid: [
+        // ════════════════════════════════════════════════
+        // 1. CANYON NORTH WALL  (z = -3, full length)
+        // ════════════════════════════════════════════════
+        { x: -7, y: 0, z: -3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 1, z: -3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 2, z: -3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 3, z: -3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 4, z: -3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 5, z: -3, mat: 'rock', w: 15, d: 1, isStatic: true },
 
-                // 5. Zona Aman (Goal) di puncak tebing tertinggi
-                { x: 12, y: 7, z:  0, mat: 'goal', w: 1, d: 1, isStatic: true }
-            ]
-        }
+        // ════════════════════════════════════════════════
+        // 2. CANYON SOUTH WALL  (z = 3, full length)
+        // ════════════════════════════════════════════════
+        { x: -7, y: 0, z:  3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 1, z:  3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 2, z:  3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 3, z:  3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 4, z:  3, mat: 'rock', w: 15, d: 1, isStatic: true },
+        { x: -7, y: 5, z:  3, mat: 'rock', w: 15, d: 1, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 3. UPSTREAM RESERVOIR FLOOR  (x = -7 to -2)
+        // ════════════════════════════════════════════════
+        { x: -7, y: 0, z: -2, mat: 'ground', w: 5, d: 5, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 4. RESERVOIR WATER  (3 layers high — high flood level)
+        // ════════════════════════════════════════════════
+        { x: -7, y: 1, z: -2, mat: 'water', w: 5, d: 5, isStatic: true },
+        { x: -7, y: 2, z: -2, mat: 'water', w: 5, d: 5, isStatic: true },
+        { x: -7, y: 3, z: -2, mat: 'water', w: 5, d: 5, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 5. DAM WALL  (x = -2 to -1, spans full valley z=-2 to z=2)
+        //    Foundation: solid concrete base
+        //    Left/right piers: solid dam_block towers
+        //    GAPS in the middle (z=-1, z=0, z=1) at y=2 and y=3
+        //    → Player must fill these gaps to seal the dam!
+        // ════════════════════════════════════════════════
+
+        // Foundation (full width, never has gaps)
+        { x: -2, y: 0, z: -2, mat: 'concrete', w: 2, d: 5, isStatic: true },
+
+        // Left pier (z=-2) — full height, solid
+        { x: -2, y: 1, z: -2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 2, z: -2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 3, z: -2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 4, z: -2, mat: 'dam_block', w: 2, d: 1, isStatic: true }, // walkway top
+
+        // Right pier (z=2) — full height, solid
+        { x: -2, y: 1, z:  2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 2, z:  2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 3, z:  2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 4, z:  2, mat: 'dam_block', w: 2, d: 1, isStatic: true }, // walkway top
+
+        // Partial inner sections (z=-1 and z=1) — only y=1 built, y=2-3 are the GAPS
+        { x: -2, y: 1, z: -1, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 1, z:  1, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        // z=0 center row — fully missing (all y=1,2,3 are gaps for player to fill)
+
+        // Dam top walkway on the piers (for crossing reference)
+        { x: -2, y: 4, z: -2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+        { x: -2, y: 4, z:  2, mat: 'dam_block', w: 2, d: 1, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 6. DOWNSTREAM VALLEY FLOOR  (x = 0 to 5, dry, LOW level y=0)
+        // ════════════════════════════════════════════════
+        { x: 0, y: 0, z: -2, mat: 'ground', w: 6, d: 5, isStatic: true },
+
+        // Small puddle at base of dam (seepage visual hint)
+        { x: 0, y: 1, z: -1, mat: 'water', w: 1, d: 3, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 7. DOWNSTREAM CLIFF / SAFE ZONE  (x = 6 to 9, rising terrain)
+        // ════════════════════════════════════════════════
+        // Base cliff
+        { x: 6, y: 0, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
+        { x: 6, y: 1, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
+        { x: 6, y: 2, z: -2, mat: 'rock', w: 4, d: 5, isStatic: true },
+        // Step up
+        { x: 7, y: 3, z: -2, mat: 'rock', w: 3, d: 5, isStatic: true },
+        { x: 7, y: 4, z: -2, mat: 'rock', w: 3, d: 5, isStatic: true },
+        // Plateau top
+        { x: 8, y: 5, z: -2, mat: 'rock', w: 2, d: 5, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 8. GOAL — on the high downstream plateau
+        // ════════════════════════════════════════════════
+        { x: 8, y: 6, z:  0, mat: 'goal', w: 1, d: 1, isStatic: true }
+    ]
+}
     ];
 
     const i18n = {
