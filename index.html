@@ -370,7 +370,7 @@
     // ██████╔╝██║     ██║   ██║██║     █████╔╝     ██████╔╝█████╗  ██║  ███╗
     // ██╔══██╗██║     ██║   ██║██║     ██╔═██╗     ██╔══██╗██╔══╝  ██║   ██║
     // ██████╔╝███████╗╚██████╔╝╚██████╗██║  ██╗    ██║  ██║███████╗╚██████╔╝
-    // SECTION 1: BLOCK REGISTRY
+    // SECTION 1: BLOCK REGISTRY 
     // =========================================================================
     const BLOCK_REGISTRY = {
         // ── TERRAIN ──────────────────────────────────────────────────────────
@@ -825,7 +825,200 @@
         // ════════════════════════════════════════════════
         { x: 8, y: 6, z:  0, mat: 'goal', w: 1, d: 1, isStatic: true }
     ]
+},
+
+// ── LEVEL 12 ──────────────────────────────────────────────────────────
+{
+    id: "level_12",
+    title:      { id: "Level 12: Kota Pesisir & Mega Tsunami", en: "Level 12: Coastal Town & Mega Tsunami" },
+    desc:       { id: "Gelombang raksasa mendekat! Tanpa batas waktu, bangun tanggul laut pelindung kota dan rute evakuasi kompleks menuju puncak bukit.", en: "Massive wave approaching! Take your time to build a seawall protecting the town and complex evacuation routes to the hilltop." },
+    drrTopic:   "tsunami", difficulty: "hard", icon: "🌊",
+    drrLesson:  { id: "Tsunami besar membutuhkan tata ruang kota yang adaptif. Pertahanan berlapis (mangrove, tanggul, rute vertikal) adalah kunci keselamatan.", en: "Large tsunamis require adaptive urban planning. Layered defenses (mangroves, seawalls, vertical routes) are the key to safety." },
+
+    playerStart:  { x: -4, y: 1, z: 0 }, // Mulai tepat di tepi pantai
+    cameraTarget: { x: 2, y: 2, z: 0 },
+
+    // Stok balok dibuat sangat masif agar bisa berkreasi penuh
+    resources: { concrete: 150, dam_block: 100, rock: 80, wood: 100, brick: 80, rope_bridge: 50, mangrove: 40, sandbag: 100 },
+    parBlocks:  80,
+    timeLimit:  null, // Tanpa batasan waktu agar bisa fokus membangun desain yang rumit
+
+    grid: [
+        // ════════════════════════════════════════════════
+        // 1. ZONA TSUNAMI & LAUT DALAM  (x = -15 to -8)
+        // Gelombang mega tsunami sedang terbentuk di kejauhan
+        // ════════════════════════════════════════════════
+        { x: -15, y: 0, z: -8, mat: 'sand',  w: 8, d: 17, isStatic: true }, // Dasar laut
+        { x: -15, y: 1, z: -8, mat: 'water', w: 8, d: 17, isStatic: true },
+        { x: -15, y: 2, z: -8, mat: 'water', w: 6, d: 17, isStatic: true },
+        { x: -15, y: 3, z: -8, mat: 'water', w: 4, d: 17, isStatic: true },
+        { x: -15, y: 4, z: -8, mat: 'water', w: 2, d: 17, isStatic: true }, // Puncak gelombang
+
+        // ════════════════════════════════════════════════
+        // 2. PANTAI PASIR LEBAR  (x = -7 to -3)
+        // Area rekreasi pantai (terinspirasi dari foto diorama)
+        // ════════════════════════════════════════════════
+        { x: -7, y: 0, z: -8, mat: 'sand', w: 5, d: 17, isStatic: true },
+        
+        // Dekorasi Pantai: Menara Lifeguard & Pohon
+        { x: -5, y: 1, z:  2, mat: 'wood', w: 1, d: 1, isStatic: true },
+        { x: -5, y: 2, z:  2, mat: 'wood', w: 1, d: 1, isStatic: true },
+        { x: -6, y: 1, z: -4, mat: 'palm_tree', w: 1, d: 1, isStatic: true },
+        { x: -4, y: 1, z:  5, mat: 'palm_tree', w: 1, d: 1, isStatic: true },
+        { x: -3, y: 1, z: -7, mat: 'palm_tree', w: 1, d: 1, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 3. KOTA PESISIR / BOARDWALK  (x = -2 to 7)
+        // Zona kota yang padat dan rentan hantaman ombak
+        // ════════════════════════════════════════════════
+        { x: -2, y: 0, z: -8, mat: 'ground', w: 10, d: 17, isStatic: true },
+        { x: -2, y: 1, z: -8, mat: 'concrete', w: 2, d: 17, isStatic: true }, // Jalan setapak pinggir pantai (Boardwalk)
+
+        // Bangunan A: "Surf Shop" (Kiri)
+        { x: 1, y: 1, z: -6, mat: 'brick', w: 4, d: 4, isStatic: true },
+        { x: 1, y: 2, z: -6, mat: 'brick', w: 4, d: 4, isStatic: true },
+        { x: 1, y: 3, z: -6, mat: 'wood',  w: 4, d: 4, isStatic: true }, // Atap landai
+
+        // Bangunan B: "Beach House" (Kanan)
+        { x: 2, y: 1, z: 3, mat: 'wood', w: 3, d: 4, isStatic: true },
+        { x: 2, y: 2, z: 3, mat: 'wood', w: 3, d: 4, isStatic: true },
+        { x: 2, y: 3, z: 3, mat: 'brick', w: 3, d: 4, isStatic: true }, // Atap bata
+
+        // Jalan Raya Tengah Kota
+        { x: 6, y: 1, z: -8, mat: 'concrete', w: 2, d: 17, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 4. BUKIT EVAKUASI BERLAPIS  (x = 8 to 18)
+        // Medan yang semakin menanjak menuju zona aman absolut
+        // ════════════════════════════════════════════════
+        // Tier 1 (Base Hill)
+        { x: 8, y: 0, z: -8, mat: 'rock', w: 11, d: 17, isStatic: true },
+        { x: 8, y: 1, z: -8, mat: 'rock', w: 11, d: 17, isStatic: true },
+        
+        // Tier 2
+        { x: 10, y: 2, z: -8, mat: 'rock', w: 9, d: 17, isStatic: true },
+        { x: 10, y: 3, z: -8, mat: 'rock', w: 9, d: 17, isStatic: true },
+
+        // Tier 3
+        { x: 13, y: 4, z: -8, mat: 'rock', w: 6, d: 17, isStatic: true },
+        { x: 13, y: 5, z: -8, mat: 'rock', w: 6, d: 17, isStatic: true },
+
+        // Tier 4 (Puncak)
+        { x: 16, y: 6, z: -8, mat: 'rock', w: 3, d: 17, isStatic: true },
+        { x: 16, y: 7, z: -8, mat: 'rock', w: 3, d: 17, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 5. GOAL — Helipad Darurat di Puncak Tertinggi
+        // ════════════════════════════════════════════════
+        { x: 17, y: 8, z: 0, mat: 'concrete', w: 2, d: 2, isStatic: true },
+        { x: 17, y: 9, z: 0, mat: 'goal', w: 1, d: 1, isStatic: true }
+    ]
+},
+
+// ── LEVEL 13 ──────────────────────────────────────────────────────────
+{
+    id: "level_13",
+    title:      { id: "Level 13: Gempa Megathrust Perkotaan", en: "Level 13: Urban Megathrust Earthquake" },
+    desc:       { id: "Gempa dahsyat membelah pusat kota! Jalanan hancur dan gedung tidak stabil. Bangun jembatan darurat melewati patahan bumi dan evakuasi warga ke Taman Pusat.", en: "A massive quake split the city center! Roads are destroyed and buildings unstable. Build emergency bridges over the fissure and evacuate to the Central Park." },
+    drrTopic:   "earthquake", difficulty: "hard", icon: "🏙️",
+    drrLesson:  { id: "Saat gempa besar, jauhi gedung berkaca dan tiang listrik. Titik kumpul yang ideal adalah area terbuka hijau seperti taman kota yang jauh dari reruntuhan.", en: "During a major earthquake, stay away from glass buildings and power lines. Ideal assembly points are open green spaces like city parks away from debris." },
+
+    playerStart:  { x: -14, y: 1, z: -2 }, // Mulai di ujung jalan raya barat
+    cameraTarget: { x: 0, y: 5, z: 0 },
+
+    // Sumber daya berlimpah untuk memperbaiki kota raksasa
+    resources: { steel_beam: 120, concrete: 100, wood: 80, glass: 50, brick: 100, door: 10, lamp_red: 20 },
+    parBlocks:  85,
+    timeLimit:  null,
+
+    grid: [
+        // ════════════════════════════════════════════════
+        // 1. ZONA UTAMA: PATAHAN BUMI (FISSURE) 
+        // Perempatan tengah kota hancur, membentuk jurang ke bawah (y = -2)
+        // ════════════════════════════════════════════════
+        { x: -15, y: -2, z: -15, mat: 'rock', w: 31, d: 31, isStatic: true }, // Dasar jurang batu yang sangat luas
+        { x: -3,  y: -1, z: -3,  mat: 'debris', w: 1, d: 1, isStatic: true },
+        { x:  2,  y: -1, z:  2,  mat: 'debris', w: 1, d: 1, isStatic: true },
+        { x:  0,  y: -1, z: -4,  mat: 'debris', w: 1, d: 1, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 2. JALAN RAYA & TROTOAR (Ketinggian Normal y = 0)
+        // ════════════════════════════════════════════════
+        // Jalan Barat (Awal Player)
+        { x: -15, y: 0, z: -3, mat: 'concrete', w: 11, d: 7, isStatic: true },
+        // Jalan Timur
+        { x:  5,  y: 0, z: -3, mat: 'concrete', w: 11, d: 7, isStatic: true },
+        // Jalan Utara
+        { x: -3,  y: 0, z: -15, mat: 'concrete', w: 7, d: 11, isStatic: true },
+        // Jalan Selatan
+        { x: -3,  y: 0, z:  5,  mat: 'concrete', w: 7, d: 11, isStatic: true },
+
+        // Puing-puing berserakan di jalan raya
+        { x: -10, y: 1, z: -1, mat: 'debris', w: 1, d: 1, isStatic: true },
+        { x: -8,  y: 1, z:  2, mat: 'debris', w: 1, d: 1, isStatic: true },
+        { x: -2,  y: 1, z: -8, mat: 'debris', w: 1, d: 1, isStatic: true },
+        { x:  8,  y: 1, z:  1, mat: 'debris', w: 1, d: 1, isStatic: true },
+
+        // Lampu Peringatan Lalu Lintas (Merah) yang berkedip
+        { x: -4, y: 1, z: -4, mat: 'lamp_red', w: 1, d: 1, shape: 'cylinder', isStatic: true },
+        { x:  4, y: 1, z:  4, mat: 'lamp_red', w: 1, d: 1, shape: 'cylinder', isStatic: true },
+        { x: -4, y: 1, z:  4, mat: 'lamp_red', w: 1, d: 1, shape: 'cylinder', isStatic: true },
+        { x:  4, y: 1, z: -4, mat: 'lamp_red', w: 1, d: 1, shape: 'cylinder', isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 3. GEDUNG A (Barat Laut): PENCAKAR LANGIT KACA (Hampir Runtuh)
+        // ════════════════════════════════════════════════
+        { x: -13, y: 0, z: -13, mat: 'ground', w: 9, d: 9, isStatic: true }, // Fondasi
+        // Inti lift (beton)
+        { x: -10, y: 1, z: -10, mat: 'concrete', w: 3, d: 3, isStatic: true },
+        { x: -10, y: 2, z: -10, mat: 'concrete', w: 3, d: 3, isStatic: true },
+        { x: -10, y: 3, z: -10, mat: 'concrete', w: 3, d: 3, isStatic: true },
+        { x: -10, y: 4, z: -10, mat: 'concrete', w: 3, d: 3, isStatic: true },
+        { x: -10, y: 5, z: -10, mat: 'concrete', w: 3, d: 3, isStatic: true },
+        { x: -10, y: 6, z: -10, mat: 'concrete', w: 3, d: 3, isStatic: true },
+        // Fasad Kaca (Pecah di beberapa bagian)
+        { x: -12, y: 1, z: -12, mat: 'glass', w: 7, d: 1, isStatic: true },
+        { x: -12, y: 2, z: -12, mat: 'glass', w: 7, d: 1, isStatic: true },
+        { x: -12, y: 3, z: -12, mat: 'glass', w: 7, d: 1, isStatic: true }, // Lantai atas utuh
+        { x: -12, y: 4, z: -12, mat: 'glass', w: 7, d: 1, isStatic: true },
+        { x: -6,  y: 1, z: -11, mat: 'glass', w: 1, d: 6, isStatic: true }, 
+
+        // ════════════════════════════════════════════════
+        // 4. GEDUNG B (Timur Laut): APARTEMEN BATA KLASIK DENGAN PINTU
+        // ════════════════════════════════════════════════
+        { x: 5, y: 0, z: -13, mat: 'ground', w: 9, d: 9, isStatic: true },
+        // Lantai 1 Bata
+        { x: 6, y: 1, z: -12, mat: 'brick', w: 7, d: 7, isStatic: true },
+        { x: 9, y: 1, z: -5,  mat: 'door',  w: 1, d: 2, shape: 'door', isStatic: true }, // Pintu Utama menghadap jalan
+        // Lantai 2 Bata
+        { x: 6, y: 2, z: -12, mat: 'brick', w: 7, d: 7, isStatic: true },
+        // Atap Kayu
+        { x: 5, y: 3, z: -13, mat: 'wood', w: 9, d: 9, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 5. GEDUNG C (Barat Daya): RERUNTUHAN TOTAL
+        // ════════════════════════════════════════════════
+        { x: -13, y: 0, z: 5, mat: 'ground', w: 9, d: 9, isStatic: true },
+        { x: -11, y: 1, z: 7, mat: 'concrete', w: 5, d: 5, isStatic: true },
+        { x: -10, y: 2, z: 8, mat: 'debris', w: 1, d: 1, isStatic: true },
+        { x: -12, y: 2, z: 6, mat: 'debris', w: 1, d: 1, isStatic: true },
+        { x: -8,  y: 2, z: 10, mat: 'debris', w: 1, d: 1, isStatic: true },
+
+        // ════════════════════════════════════════════════
+        // 6. TAMAN PUSAT KOTA (Tenggara): ZONA EVAKUASI AMAN (GOAL)
+        // ════════════════════════════════════════════════
+        { x: 5, y: 0, z: 5, mat: 'ground', w: 11, d: 11, isStatic: true }, // Area taman yang luas
+        { x: 6, y: 1, z: 6, mat: 'palm_tree', w: 1, d: 1, shape: 'palm_tree', isStatic: true },
+        { x: 13, y: 1, z: 6, mat: 'palm_tree', w: 1, d: 1, shape: 'palm_tree', isStatic: true },
+        { x: 6, y: 1, z: 13, mat: 'mangrove', w: 1, d: 1, shape: 'tree', isStatic: true },
+        { x: 13, y: 1, z: 13, mat: 'mangrove', w: 1, d: 1, shape: 'tree', isStatic: true },
+        
+        // Panggung Evakuasi Darurat di tengah taman
+        { x: 9, y: 1, z: 9, mat: 'wood', w: 3, d: 3, isStatic: true },
+        { x: 10, y: 2, z: 10, mat: 'goal', w: 1, d: 1, isStatic: true }
+    ]
 }
+
     ];
 
     const i18n = {
@@ -940,6 +1133,8 @@
 
     let currentMaterialKey = 'ground';
     let currentShapeW = 1, currentShapeD = 1, currentShapeType = 'box';
+    let baseShapeW = 1, baseShapeD = 1; // Menyimpan dimensi asli dari tombol
+    let currentRotation = 0; // Melacak arah: 0, 1, 2, atau 3
 
     const interactables   = [];
     let gridState         = {};
@@ -964,7 +1159,7 @@
         return materialCache[key];
     }
 
-    function createBrickMesh(matKey, w, d, shapeOverride) {
+    function createBrickMesh(matKey, w, d, shapeOverride, rot=0, baseW=w, baseD=d) {
         const group = new THREE.Group();
         const data  = BLOCK_REGISTRY[matKey] || BLOCK_REGISTRY.ground;
         const shape = shapeOverride || data.shapeDefinition || 'box';
@@ -981,15 +1176,101 @@
             const hb = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockHeight, blockSize), new THREE.MeshBasicMaterial({ visible: false }));
             hb.position.y = 0; group.add(hb);
 
-        } else if (shape === 'humanoid') {
-            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 16), mat);
-            body.position.y = 0.28; body.castShadow = true; group.add(body);
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), mat);
-            head.position.y = 0.66; head.castShadow = true; group.add(head);
-            const armMat = getMat(data.color);
-            const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8);
-            const lArm = new THREE.Mesh(armGeo, armMat); lArm.position.set(-0.28, 0.3, 0); lArm.rotation.z = 0.4; group.add(lArm);
-            const rArm = new THREE.Mesh(armGeo, armMat); rArm.position.set( 0.28, 0.3, 0); rArm.rotation.z = -0.4; group.add(rArm);
+} else if (shape === 'humanoid') {
+            // Material warna khas Classic Lego (Sesuai referensi gambar)
+            const matShirt = getMat(0xef4444);  // Baju Merah
+            const matPants = getMat(0x2563eb);  // Celana Biru
+            const matSkin  = getMat(0xfacc15);  // Kulit Kuning
+            const matBlack = getMat(0x111111);  // Mata & Senyum
+
+            // 1. Kaki Kiri & Kanan (Menyentuh tanah di y = 0)
+            const legGeo = new THREE.BoxGeometry(0.18, 0.35, 0.25);
+            const lLeg = new THREE.Mesh(legGeo, matPants);
+            lLeg.position.set(-0.105, 0.175, 0); lLeg.castShadow = true; group.add(lLeg);
+            const rLeg = new THREE.Mesh(legGeo, matPants);
+            rLeg.position.set(0.105, 0.175, 0); rLeg.castShadow = true; group.add(rLeg);
+
+            // 2. Pinggul / Sabuk
+            const hipGeo = new THREE.BoxGeometry(0.4, 0.15, 0.25);
+            const hips = new THREE.Mesh(hipGeo, matPants);
+            hips.position.set(0, 0.425, 0); hips.castShadow = true; group.add(hips);
+
+            // 3. Tubuh (Trapesium Presisi)
+            const torsoGeo = new THREE.BoxGeometry(0.4, 0.45, 0.25);
+            const pos = torsoGeo.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+                if (pos.getY(i) > 0) {
+                    pos.setX(i, pos.getX(i) * 0.75); // Menyempitkan bahu
+                    pos.setZ(i, pos.getZ(i) * 0.85); // Menyempitkan dada atas
+                }
+            }
+            torsoGeo.computeVertexNormals();
+            const torso = new THREE.Mesh(torsoGeo, matShirt);
+            torso.position.set(0, 0.725, 0); torso.castShadow = true; group.add(torso);
+
+            // 4. Leher
+            const neckGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05, 16);
+            const neck = new THREE.Mesh(neckGeo, matSkin);
+            neck.position.set(0, 0.975, 0); group.add(neck);
+
+            // 5. Kepala & Stud (Pentil) atas
+            const headGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.35, 20);
+            const head = new THREE.Mesh(headGeo, matSkin);
+            head.position.set(0, 1.175, 0); head.castShadow = true; group.add(head);
+
+            const topStudGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.08, 16);
+            const topStud = new THREE.Mesh(topStudGeo, matSkin);
+            topStud.position.set(0, 1.39, 0); topStud.castShadow = true; group.add(topStud);
+
+            // 6. Wajah Presisi (Mata & Senyum)
+            const eyeGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.02, 16);
+            
+            const lEye = new THREE.Mesh(eyeGeo, matBlack);
+            lEye.rotation.x = Math.PI / 2; 
+            lEye.position.set(-0.07, 1.22, 0.19); group.add(lEye);
+            
+            const rEye = new THREE.Mesh(eyeGeo, matBlack);
+            rEye.rotation.x = Math.PI / 2; 
+            rEye.position.set(0.07, 1.22, 0.19); group.add(rEye);
+
+            // Senyum menggunakan Torus yang dirotasi presisi ke bawah
+            const smileArc = Math.PI * 0.6; // ~108 derajat lengkungan
+            const smileGeo = new THREE.TorusGeometry(0.06, 0.012, 8, 16, smileArc);
+            const smile = new THREE.Mesh(smileGeo, matBlack);
+            smile.rotation.z = Math.PI * 1.2; // Memutar pusat lengkungan ke bawah
+            smile.position.set(0, 1.15, 0.198); group.add(smile);
+
+            // 7. Lengan - hampir vertikal, menempel ke sisi torso
+            const armGeo = new THREE.CylinderGeometry(0.055, 0.05, 0.32, 12);
+
+            const lArm = new THREE.Mesh(armGeo, matShirt);
+            lArm.position.set(-0.23, 0.725, 0);
+            lArm.rotation.z = 0.05;   // nyaris vertikal
+            lArm.castShadow = true; group.add(lArm);
+
+            const rArm = new THREE.Mesh(armGeo, matShirt);
+            rArm.position.set(0.23, 0.725, 0);
+            rArm.rotation.z = -0.05;
+            rArm.castShadow = true; group.add(rArm);
+
+            // 8. Tangan Capit - TIDAK ADA rotation.x sama sekali
+            // Torus default = XY plane → menghadap depan (Z) ✅
+            // rotation.z = -PI/2 → celah C menghadap ke BAWAH ✅
+            const handGeo = new THREE.TorusGeometry(0.048, 0.022, 8, 16, Math.PI * 1.5);
+
+            const lHand = new THREE.Mesh(handGeo, matSkin);
+            lHand.position.set(-0.24, 0.56, 0.0);
+            lHand.rotation.z = -Math.PI / 2;   // ← celah menghadap bawah
+            lHand.castShadow = true; group.add(lHand);
+
+            const rHand = new THREE.Mesh(handGeo, matSkin);
+            rHand.position.set(0.24, 0.56, 0.0);
+            rHand.rotation.z = -Math.PI / 2;   // ← sama, kedua tangan identik
+            rHand.castShadow = true; group.add(rHand);
+
+            // 9. Hitbox Dasar (Sesuai ukuran blok)
+            const hb = new THREE.Mesh(new THREE.BoxGeometry(blockSize, blockHeight, blockSize), new THREE.MeshBasicMaterial({ visible: false }));
+            hb.position.y = 0; group.add(hb);
 
         } else if (shape === 'debris') {
             for (let i=0; i<4; i++) {
@@ -1022,58 +1303,58 @@
             hitbox.position.y = -(blockHeight/2) + (h/2);
             group.add(hitbox);
 
-            } else if (shape === 'slope') {
-            // Menentukan orientasi rotasi berdasarkan dimensi W dan D
-            const isRotated = d > w;
-            const sLen = isRotated ? d : w; // Panjang kemiringan (biasanya 2 unit)
-            const sDep = isRotated ? w : d; // Lebar balok
+           } else if (shape === 'slope') {
+                    const visualGroup = new THREE.Group();
 
-            // Membuat Profil 2D Genteng LEGO (Wedge dengan bagian atas datar)
-            const shape2D = new THREE.Shape();
-            const topFlatPart = 0.4; // Seberapa lebar bagian datar di atas (untuk stud)
-            
-            shape2D.moveTo(0, 0); 
-            shape2D.lineTo(sLen * blockSize, 0); // Dasar bawah
-            shape2D.lineTo(sLen * blockSize, 0.1); // Ujung tipis di depan
-            shape2D.lineTo(topFlatPart * blockSize, blockHeight); // Garis miring (Slope)
-            shape2D.lineTo(0, blockHeight); // Bagian datar atas
-            shape2D.lineTo(0, 0); // Garis vertikal belakang
-
-            const extrudeSettings = { depth: sDep * blockSize, bevelEnabled: false };
-            const geo = new THREE.ExtrudeGeometry(shape2D, extrudeSettings);
-            geo.center();
-            
-            const mainMesh = new THREE.Mesh(geo, mat);
-            // Sesuaikan rotasi jika balok diputar (R)
-            if (isRotated) {
-                mainMesh.rotation.y = -Math.PI / 2;
-            } else {
-                mainMesh.rotation.y = 0;
-            }
-            group.add(mainMesh);
-
-            // Menambahkan Studs (Titik) HANYA di bagian yang datar
-            const studGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.07, 12);
-            // Loop hanya untuk lebar balok, panjangnya tetap di bagian belakang (datar)
-            for (let i = 0; i < (isRotated ? w : 1); i++) {
-                for (let j = 0; j < (isRotated ? 1 : d); j++) {
-                    const stud = new THREE.Mesh(studGeo, mat);
-                    // Posisi stud digeser ke arah belakang balok agar berada di area datar
-                    stud.position.set(
-                        (i + 0.5) * blockSize - (w * blockSize) / 2,
-                        blockHeight / 2,
-                        (j + 0.5) * blockSize - (d * blockSize) / 2
-                    );
-                    // Jika 1x2, geser stud ke ujung belakang
-                    if (!isRotated && d > 1) stud.position.z -= (blockSize/2);
-                    if (isRotated && w > 1) stud.position.x -= (blockSize/2);
+                    // 1. Buat Profil 2D Genteng (Panjangnya selalu mengikuti baseD)
+                    const shape2D = new THREE.Shape();
+                    const L = baseD * blockSize;
                     
-                    group.add(stud);
-                }
-            }
+                    // Area datar di bagian atas belakang untuk tempat pentil (stud)
+                    const topFlatDepth = 0.6 * blockSize; 
 
-            const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w * blockSize, blockHeight, d * blockSize), new THREE.MeshBasicMaterial({visible:false}));
-            group.add(hitbox);
+                    shape2D.moveTo(0, 0); 
+                    shape2D.lineTo(L, 0); // Sisi bawah
+                    shape2D.lineTo(L, 0.05); // Ujung depan yang tipis
+                    shape2D.lineTo(topFlatDepth, blockHeight); // Sisi miring (slope)
+                    shape2D.lineTo(0, blockHeight); // Sisi datar atas
+                    shape2D.lineTo(0, 0); // Sisi punggung vertikal
+
+                    // Extrude sedalam baseW
+                    const extrudeSettings = { depth: baseW * blockSize, bevelEnabled: false };
+                    const geo = new THREE.ExtrudeGeometry(shape2D, extrudeSettings);
+
+                    // 2. Pusatkan geometri secara presisi tanpa geo.center()
+                    // Lalu putar agar selaras: Lebar di sumbu X, Panjang di sumbu Z
+                    geo.translate(-L / 2, -blockHeight / 2, -(baseW * blockSize) / 2);
+                    geo.rotateY(Math.PI / 2);
+
+                    const mainMesh = new THREE.Mesh(geo, mat);
+                    if (data.opacity === 1.0) { mainMesh.castShadow = true; mainMesh.receiveShadow = true; }
+                    visualGroup.add(mainMesh);
+
+                    // 3. Tambahkan Studs HANYA di bagian datar (belakang)
+                    const studGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.07, 12);
+                    
+                    // Titik tengah dari area datar bagian belakang (berada di ujung +Z)
+                    const studZ = (baseD * blockSize) / 2 - (topFlatDepth / 2);
+
+                    for (let i = 0; i < baseW; i++) {
+                        const stud = new THREE.Mesh(studGeo, mat);
+                        // Susun pentil berjajar mengikuti lebar (baseW)
+                        const studX = (i + 0.5) * blockSize - (baseW * blockSize) / 2;
+                        stud.position.set(studX, blockHeight / 2, studZ);
+                        if (data.opacity === 1.0) stud.castShadow = true;
+                        visualGroup.add(stud);
+                    }
+
+                    // 4. Putar SELURUH visualGroup berdasarkan currentRotation (0, 1, 2, 3)
+                    visualGroup.rotation.y = rot * (-Math.PI / 2);
+                    group.add(visualGroup);
+
+                    // 5. Hitbox yang digunakan sistem grid tetap memakai w dan d yang ter-update
+                    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(w * blockSize, blockHeight, d * blockSize), new THREE.MeshBasicMaterial({visible:false}));
+                    group.add(hitbox);
 
         } else if (shape === 'wheel') {
             const geo = new THREE.CylinderGeometry(blockSize*0.4, blockSize*0.4, w * blockSize, 32);
@@ -1232,7 +1513,9 @@
         return gy * blockHeight; // Jika tumpukan kosong, fallback standar.
     }
 
-    function placeBrick(gx, gy, gz, matKey, w=1, d=1, isStatic=false, shapeOverride=null, targetVisualY=null) {
+    function placeBrick(gx, gy, gz, matKey, w=1, d=1, isStatic=false, shapeOverride=null, targetVisualY=null, rot=0, bw=null, bd=null) {
+        let baseW = bw || w;
+        let baseD = bd || d;
         const data  = BLOCK_REGISTRY[matKey] || BLOCK_REGISTRY.ground;
         const shape = shapeOverride || data.shapeDefinition || 'box';
 
@@ -1247,7 +1530,7 @@
             visualY = getAbsoluteY(gx, gy, gz) + blockHeight / 2;
         }
 
-        const brick  = createBrickMesh(matKey, w, d, shape);
+        const brick  = createBrickMesh(matKey, w, d, shape, rot, baseW, baseD);
         const visualX = (gx + (gx+w-1)) / 2 * blockSize;
         const visualZ = (gz + (gz+d-1)) / 2 * blockSize;
         
@@ -1388,7 +1671,7 @@
 
     function updateGhostBrick() {
         scene.remove(ghostBrick);
-        ghostBrick = createBrickMesh(currentMaterialKey, currentShapeW, currentShapeD, currentShapeType);
+        ghostBrick = createBrickMesh(currentMaterialKey, currentShapeW, currentShapeD, currentShapeType, currentRotation, baseShapeW, baseShapeD);
         ghostBrick.traverse(c => {
             if (c.isMesh && c.material) {
                 c.material = c.material.clone();
@@ -1513,7 +1796,7 @@
             }
             const mk = currentShapeType === 'tree' ? 'mangrove' : currentMaterialKey;
             // Kita pass juga visualY target dari kalkulasi mouse, sehingga hasilnya tidak melenceng lagi
-            placeBrick(validGridPos.x, validGridPos.y, validGridPos.z, mk, currentShapeW, currentShapeD, false, currentShapeType, validGridPos.visualY);
+            placeBrick(validGridPos.x, validGridPos.y, validGridPos.z, mk, currentShapeW, currentShapeD, false, currentShapeType, validGridPos.visualY, currentRotation, baseShapeW, baseShapeD);
             onPointerMove(e);
         } else if (activeTool === 'delete' && hoveredBrick) {
             removeBrick(hoveredBrick.userData.parentRef);
@@ -1585,6 +1868,9 @@
 
     function setShape(w, d, shape, el) {
         currentShapeW = w; currentShapeD = d; currentShapeType = shape;
+        baseShapeW = w; baseShapeD = d; // Simpan ukuran aslinya
+        currentRotation = 0;            // Reset rotasi ke 0 derajat
+        
         if (shape === 'tree') {
             const man = BLOCK_REGISTRY.mangrove;
             document.getElementById('edu-text').innerHTML = man.edu[currentLang];
@@ -1597,10 +1883,16 @@
     }
 
     function rotateBlock() {
-        if (currentShapeType === 'tree' || currentShapeW === currentShapeD) return;
+        if (currentShapeType === 'tree') return; // Pohon tidak perlu diputar
+        
+        // Putar arah ke 0 -> 1 -> 2 -> 3 -> lalu kembali ke 0
+        currentRotation = (currentRotation + 1) % 4;
+        
+        // Swap W dan D untuk update area hitbox/grid
         let tempW = currentShapeW;
         currentShapeW = currentShapeD;
         currentShapeD = tempW;
+        
         updateGhostBrick();
     }
 
