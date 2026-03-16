@@ -257,12 +257,57 @@
             opacity: 0; transition: opacity 0.3s; z-index: 20; white-space: nowrap;
         }
         #message-box.show { opacity: 1; }
+
+        /* ── Music Player UI ─────────────────────────── */
+        #music-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px; /* Pindah ke kanan */
+            left: auto;  /* Pastikan posisi kiri dilepas */
+            z-index: 100;
+            background: var(--surface);
+            padding: 6px 12px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.5);
+            backdrop-filter: blur(10px);
+        }
+        #music-toggle {
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        #music-toggle:active { transform: scale(0.9); }
+        #volume-control {
+            width: 60px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
     </style>
 </head>
 <body>
     <div id="top-bar">
         <button class="lang-btn active" onclick="setLang('id')">🇮🇩 ID</button>
         <button class="lang-btn"        onclick="setLang('en')">🇺🇸 EN</button>
+    </div>
+
+    <div id="music-container">
+        <button id="music-toggle" onclick="toggleMusic()">▶</button>
+        <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.3" oninput="updateVolume(this.value)">
+        <audio id="bg-music" src="Chillpeach.mp3" loop></audio>
     </div>
     
     <div id="landing-page" class="overlay-screen">
@@ -1627,6 +1672,7 @@
 
         if (!isStatic) {
             spawnParticles(visualX, visualY, visualZ, data.color, 5);
+            SFX.playPlock(); // Suara plock saat pasang balok
             brick.scale.set(0.7, 0.7, 0.7);
             new TWEEN.Tween(brick.scale).to({ x:1, y:1, z:1 }, 220).easing(TWEEN.Easing.Back.Out).start();
             placedBlocksCount++;
@@ -1662,6 +1708,7 @@
         scene.remove(brickGroup);
 
         const data = BLOCK_REGISTRY[ud.matKey] || BLOCK_REGISTRY.ground;
+        SFX.playDelete(); // Suara pecah saat hapus balok
         spawnParticles(brickGroup.position.x, brickGroup.position.y, brickGroup.position.z, data.color, 4);
     }
 
@@ -1682,6 +1729,88 @@
             new TWEEN.Tween(mat).to({ opacity:0 }, isConfetti ? 1600 : 520).start();
         }
     }
+
+    // --- SOUND ENGINE ---
+const SFX = {
+    ctx: null,
+    init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    
+    // Suara "Plocks!!" saat pasang balok
+    playPlock() {
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+    },
+
+    // Suara "Klik" saat rotasi
+    playRotate() {
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+    },
+
+    // Suara "Thump" saat melangkah
+    playStep() {
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(60, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+    },
+
+    // Suara saat hapus balok
+    playDelete() {
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.15);
+    },
+    // Melodi Kemenangan (Arpeggio Retro)
+    playWin() {
+        this.init();
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // Nada C5, E5, G5, C6
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            
+            osc.type = 'triangle'; // Suara lembut khas game jadul
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.1);
+            
+            gain.gain.setValueAtTime(0.2, this.ctx.currentTime + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.1 + 0.2);
+            
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            
+            osc.start(this.ctx.currentTime + i * 0.1);
+            osc.stop(this.ctx.currentTime + i * 0.1 + 0.2);
+        });
+    }
+};
 
     let charGroup = null;
     let charGrid  = { x:0, y:0, z:0 };
@@ -1929,6 +2058,7 @@
         
         // Putar arah ke 0 -> 1 -> 2 -> 3 -> lalu kembali ke 0
         currentRotation = (currentRotation + 1) % 4;
+        SFX.playRotate(); // Suara klik saat rotasi
         
         // Swap W dan D untuk update area hitbox/grid
         let tempW = currentShapeW;
@@ -2016,6 +2146,7 @@
         document.getElementById('level-fail').classList.add('show');
         document.getElementById('ui-layer').classList.add('hidden');
         spawnParticles(charGroup.position.x, charGroup.position.y, charGroup.position.z, 0xef4444, 20);
+        SFX.playStep(); // Suara thump saat langkah
     }
 
     function renderLevelList() {
@@ -2144,6 +2275,7 @@
     }
 
     function showLevelClear() {
+        SFX.playWin(); // Jalankan melodi kemenangan!
         stopTimer();
         const m = MISSION_REGISTRY[currentMissionIdx];
         const par = m ? (m.parBlocks || 6) : 6;
@@ -2285,6 +2417,35 @@
     animate();
 
 // =========================================================================
+
+
+    // --- BACKGROUND MUSIC LOGIC ---
+
+    const music = document.getElementById('bg-music');
+    const musicBtn = document.getElementById('music-toggle');
+    music.volume = 0.3;
+
+    function toggleMusic() {
+        if (music.paused) {
+            music.play().catch(e => console.log("Menunggu interaksi user..."));
+            musicBtn.textContent = '⏸';
+            SFX.init(); 
+        } else {
+            music.pause();
+            musicBtn.textContent = '▶';
+        }
+    }
+
+    function updateVolume(val) {
+        music.volume = val;
+    }
+
+    // Pancingan: Klik di MANA SAJA dalam Landing Page akan memicu musik
+    document.getElementById('landing-page').addEventListener('click', () => {
+        if (music.paused) {
+            toggleMusic();
+        }
+    }, { once: true }); // 'once: true' memastikan kode ini cuma jalan sekali saat klik pertama
 
     </script>
 </body>
