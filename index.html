@@ -44,6 +44,43 @@
             background: rgba(220, 228, 242, 0.88); backdrop-filter: blur(14px); z-index: 50;
             transition: opacity 0.4s ease; padding: 20px;
         }
+
+        /* Latar Belakang Ocean/DRR dengan efek Opacity */
+        #landing-page, #level-select-page {
+            background: 
+                linear-gradient(rgba(220, 228, 242, 0.75), rgba(220, 228, 242, 0.95)), 
+                url('https://images.unsplash.com/photo-1505118380757-91f5f5632de0?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* Container untuk Landing Page */
+        .landing-card {
+            background: var(--surface);
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+            padding: 32px;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid #ffffff;
+        }
+
+        /* Styling untuk Gambar Header */
+        .landing-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+            border: 2px solid #f1f5f9;
+        }
+
         .hidden { opacity: 0 !important; pointer-events: none !important; }
 
         .title-box { text-align: center; margin-bottom: 28px; }
@@ -227,16 +264,21 @@
         <button class="lang-btn active" onclick="setLang('id')">🇮🇩 ID</button>
         <button class="lang-btn"        onclick="setLang('en')">🇺🇸 EN</button>
     </div>
-
+    
     <div id="landing-page" class="overlay-screen">
-        <div class="title-box">
-            <span class="title-badge" data-i18n="appTag">EDUKASI DRR</span>
-            <h1 data-i18n="title">Builder's Journey</h1>
-            <p data-i18n="subtitle">Susun balok, pelajari mitigasi bencana, dan selamatkan warga.</p>
+            <div class="landing-card">
+                <img class="landing-image" src="https://images.unsplash.com/photo-1587654780291-39c9404d746b?q=80&w=600&auto=format&fit=crop" alt="Lego Blocks">
+                
+                <div class="title-box" style="margin-bottom: 20px;">
+                    <span class="title-badge" data-i18n="appTag">EDUKASI DRR</span>
+                    <h1 data-i18n="title">Builder's Journey</h1>
+                    <p data-i18n="subtitle">Susun balok, pelajari mitigasi bencana, dan selamatkan warga.</p>
+                </div>
+                
+                <button class="menu-btn" onclick="showLevelSelect()" data-i18n="btnMission">🚨 Misi Evakuasi</button>
+                <button class="menu-btn sandbox" onclick="startGame('sandbox')" data-i18n="btnSandbox">🏖️ Mode Kotak Pasir</button>
+            </div>
         </div>
-        <button class="menu-btn" onclick="showLevelSelect()" data-i18n="btnMission">🚨 Misi Evakuasi</button>
-        <button class="menu-btn sandbox" onclick="startGame('sandbox')" data-i18n="btnSandbox">🏖️ Mode Kotak Pasir</button>
-    </div>
 
     <div id="level-select-page" class="overlay-screen hidden">
         <div class="title-box">
